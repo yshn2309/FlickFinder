@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FlickFinder</title>
+
+  <!-- Telegram Mini App -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>🎬 FlickFinder</h1>
+
+    <select id="languageSwitcher">
+      <option value="en">EN</option>
+      <option value="fr">FR</option>
+      <option value="ar">AR</option>
+    </select>
+  </header>
+
+  <section class="controls">
+    <label>
+      ⭐ Min Rating:
+      <input type="range" id="rating" min="0" max="10" step="0.5" value="6" />
+      <span id="ratingValue">6</span>
+    </label>
+  </section>
+
+  <main id="movies"></main>
+
+  <script src="telegram.js"></script>
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
