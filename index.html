@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-    <script src='//libtl.com/sdk.js' data-zone='10509475' data-sdk='show_10509475'></script>    <meta charset="UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlickFinder PRO | Ultimate Movie App</title>
+    
+    <!-- 💰 Monetag SDK Integration (Added as requested) -->
+    <script src='//libtl.com/sdk.js' data-zone='10509475' data-sdk='show_10509475'></script>
+
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
     <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
         body { 
             background-color: #0f172a; 
@@ -65,9 +71,9 @@
         
         <div class="flex gap-2 overflow-x-auto hide-scroll text-[11px]">
             <button onclick="fetchMovies('/api/trending')" class="tab-active px-4 py-2 rounded-lg whitespace-nowrap shadow-lg">Trending 🔥</button>
-            <button onclick="alert('Feature coming soon!')" class="bg-gray-800 px-4 py-2 rounded-lg whitespace-nowrap">Year 🗓️</button>
-            <button onclick="alert('Feature coming soon!')" class="bg-gray-800 px-4 py-2 rounded-lg whitespace-nowrap">Rating ⭐</button>
-            <button onclick="alert('Feature coming soon!')" class="bg-gray-800 px-4 py-2 rounded-lg whitespace-nowrap">Actors 🧑‍🎤</button>
+            <button onclick="tg.showAlert('Coming soon!')" class="bg-gray-800 px-4 py-2 rounded-lg whitespace-nowrap">Year 🗓️</button>
+            <button onclick="tg.showAlert('Coming soon!')" class="bg-gray-800 px-4 py-2 rounded-lg whitespace-nowrap">Rating ⭐</button>
+            <button onclick="tg.showAlert('Coming soon!')" class="bg-gray-800 px-4 py-2 rounded-lg whitespace-nowrap">Actors 🧑‍🎤</button>
         </div>
     </section>
 
@@ -81,10 +87,10 @@
         <button onclick="fetchMovies('/api/trending')" class="flex flex-col items-center gap-1 text-red-500 transition-all">
             <span class="text-xl">🏠</span><span class="text-[10px] font-bold">Home</span>
         </button>
-        <button onclick="tg.showAlert('Genres library is being updated.')" class="flex flex-col items-center gap-1 text-gray-500">
+        <button onclick="tg.showAlert('Library update in progress.')" class="flex flex-col items-center gap-1 text-gray-500">
             <span class="text-xl">📁</span><span class="text-[10px]">Genres</span>
         </button>
-        <button onclick="tg.showAlert('Syncing your watchlist...')" class="flex flex-col items-center gap-1 text-gray-500">
+        <button onclick="tg.showAlert('Watchlist syncing...')" class="flex flex-col items-center gap-1 text-gray-500">
             <span class="text-xl">⭐</span><span class="text-[10px]">Watchlist</span>
         </button>
     </nav>
@@ -100,10 +106,10 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Constants
+        // ⚙️ Configuration
         const API_URL = "https://flickfinder-backend.onrender.com"; 
-        const MONETAG_SMARTLINK = "https://otieu.com/4/10509481"; // Your Provided Link
-        const AFFILIATE_LINK = "https://example.com/your-affiliate-link"; // Replace with your real affiliate link
+        const MONETAG_SMARTLINK = "https://otieu.com/4/10509481"; // Your Revenue Source
+        const AFFILIATE_LINK = "https://example.com/your-affiliate-link"; 
 
         // User Greeting
         document.getElementById('username').innerText = tg.initDataUnsafe.user?.first_name || "PRO User";
@@ -118,15 +124,15 @@
                 const movies = await res.json();
                 
                 if (!movies.length) {
-                    grid.innerHTML = `<p class="col-span-2 text-center text-gray-500 text-sm py-10">No results found.</p>`;
+                    grid.innerHTML = `<p class="col-span-2 text-center text-gray-500 text-sm py-10">No content available.</p>`;
                     return;
                 }
 
                 grid.innerHTML = movies.map(m => `
-                    <div class="movie-card bg-gray-800/40 rounded-2xl overflow-hidden border border-gray-700/50" onclick="showDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                    <div class="movie-card bg-gray-800/40 rounded-2xl overflow-hidden border border-gray-700/50 shadow-lg" onclick="showDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
                         <div class="relative">
                             <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-56 object-cover" alt="poster">
-                            <div class="absolute top-2 right-2 bg-black/60 px-2 py-0.5 rounded-md text-[9px] font-bold text-yellow-500 backdrop-blur-sm">
+                            <div class="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded-md text-[9px] font-bold text-yellow-500 backdrop-blur-sm">
                                 ⭐ ${m.vote_average.toFixed(1)}
                             </div>
                         </div>
@@ -137,7 +143,7 @@
                     </div>
                 `).join('');
             } catch (e) {
-                grid.innerHTML = `<p class="col-span-2 text-center py-20 text-red-500 text-xs">Error connecting to server. Please try again later.</p>`;
+                grid.innerHTML = `<p class="col-span-2 text-center py-20 text-red-500 text-xs">Connection error. Please check your internet.</p>`;
             }
         }
 
@@ -146,30 +152,30 @@
             const modal = document.getElementById('movieModal');
             const body = document.getElementById('modalBody');
             modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; // Prevent background scroll
+            document.body.style.overflow = 'hidden'; 
             
             body.innerHTML = `
                 <div class="relative w-full h-64">
-                    <img src="https://image.tmdb.org/t/p/w500${movie.backdrop_path || movie.poster_path}" class="w-full h-full object-cover rounded-2xl shadow-xl shadow-red-900/10">
+                    <img src="https://image.tmdb.org/t/p/w500${movie.backdrop_path || movie.poster_path}" class="w-full h-full object-cover rounded-2xl shadow-xl">
                     <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent">
-                         <h2 class="text-2xl font-bold text-white drop-shadow-lg">${movie.title || movie.name}</h2>
+                         <h2 class="text-2xl font-bold text-white">${movie.title || movie.name}</h2>
                     </div>
                 </div>
                 
-                <div class="px-2 space-y-4">
+                <div class="px-2 space-y-4 text-left">
                     <div class="flex items-center gap-4 text-xs font-semibold">
                         <span class="bg-gray-800 px-3 py-1.5 rounded-lg">📅 ${movie.release_date || movie.first_air_date}</span>
                         <span class="bg-yellow-500/10 text-yellow-500 px-3 py-1.5 rounded-lg">⭐ Rating: ${movie.vote_average.toFixed(1)}</span>
                     </div>
                     
-                    <p class="text-sm leading-relaxed text-gray-300 font-medium">${movie.overview || "No plot summary available for this title."}</p>
+                    <p class="text-sm leading-relaxed text-gray-300">${movie.overview || "No summary available."}</p>
                     
-                    <!-- 💰 Revenue Source 2: Monetag Smartlink Button -->
+                    <!-- 💰 Action Buttons -->
                     <div class="flex flex-col gap-3 pt-6">
-                        <button onclick="handleMonetization()" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-sm shadow-xl shadow-red-600/20 active:scale-95 transition-transform">
-                            🎬 WATCH HD TRAILER (via Sponsor)
+                        <button onclick="handleMonetization()" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-sm shadow-xl shadow-red-600/30 active:scale-95 transition-all">
+                            🎬 WATCH HD TRAILER
                         </button>
-                        <button onclick="tg.showAlert('Item saved to your local database.')" class="w-full bg-gray-800 text-gray-300 py-4 rounded-xl font-bold text-sm">
+                        <button onclick="tg.showAlert('Saved to watchlist!')" class="w-full bg-gray-800 text-gray-300 py-4 rounded-xl font-bold text-sm">
                             ➕ ADD TO WATCHLIST
                         </button>
                     </div>
@@ -177,9 +183,7 @@
             `;
         }
 
-        // Logic for Monetag Link (Using Telegram WebApp SDK best practice)
         function handleMonetization() {
-            // This ensures the link opens in the system browser or overlay smoothly
             tg.openLink(MONETAG_SMARTLINK);
         }
 
@@ -189,10 +193,10 @@
 
         function closeModal() {
             document.getElementById('movieModal').classList.add('hidden');
-            document.body.style.overflow = 'auto'; // Restore scroll
+            document.body.style.overflow = 'auto'; 
         }
 
-        // Search Input Logic
+        // Search Logic
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const query = e.target.value.trim();
             if (query.length > 2) {
