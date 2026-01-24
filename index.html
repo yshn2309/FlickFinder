@@ -1,113 +1,209 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
-    <meta charset="UTF-8">
+    <script src='//libtl.com/sdk.js' data-zone='10509475' data-sdk='show_10509475'></script>    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlickFinder PRO</title>
+    <title>FlickFinder PRO | Ultimate Movie App</title>
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Tailwind CSS for modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0f172a; color: white; font-family: 'Cairo', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); }
+        body { 
+            background-color: #0f172a; 
+            color: white; 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            user-select: none;
+        }
+        .glass { 
+            background: rgba(30, 41, 59, 0.75); 
+            backdrop-filter: blur(12px); 
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+        }
+        .movie-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .movie-card:active { transform: scale(0.95); }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .tab-active { background-color: #ef4444; font-weight: bold; }
     </style>
 </head>
-<body class="pb-20">
+<body class="pb-24">
 
-    <!-- Header & User Profile -->
-    <header class="p-4 glass sticky top-0 z-50 flex justify-between items-center border-b border-gray-700">
-        <div class="flex items-center space-x-2 space-x-reverse">
-            <div class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center font-bold text-xl">F</div>
-            <h1 class="text-lg font-bold">FlickFinder PRO</h1>
+    <!-- Header -->
+    <header class="glass sticky top-0 z-50 p-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center shadow-lg shadow-red-900/20">
+                <span class="font-bold text-white text-xl italic">F</span>
+            </div>
+            <h1 class="font-bold text-lg tracking-tight uppercase">FlickFinder <span class="text-red-500 text-xs">PRO</span></h1>
         </div>
-        <div id="user-info" class="text-xs text-gray-400"></div>
+        <div id="username" class="text-xs font-semibold text-gray-400"></div>
     </header>
 
-    <!-- Affiliate Banner (💰 مصدر دخل 1) -->
-    <div class="p-4">
-        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-4 flex items-center justify-between shadow-xl">
-            <div class="flex items-center space-x-3 space-x-reverse">
-                <img src="https://cdn-icons-png.flaticon.com/512/5968/5968204.png" class="w-12 h-12">
+    <!-- 💰 Revenue Source 1: Affiliate Banner -->
+    <section class="p-4">
+        <div onclick="openAffiliate()" class="cursor-pointer block bg-gradient-to-br from-red-600 to-indigo-700 rounded-2xl p-4 relative overflow-hidden shadow-xl border border-white/10">
+            <div class="relative z-10 flex items-center justify-between">
                 <div>
-                    <h4 class="font-bold text-sm">اشتراك Premium مجاني؟</h4>
-                    <p class="text-[10px] text-indigo-100">احصل على أفضل عروض المشاهدة هنا</p>
+                    <h3 class="text-sm font-bold mb-1">PREMIUM OFFER 📺</h3>
+                    <p class="text-[10px] text-red-100 opacity-90 leading-tight">Get 4K streaming accounts for the lowest price.</p>
                 </div>
+                <div class="bg-white text-red-600 px-3 py-1.5 rounded-full text-[10px] font-bold shadow-md">CLAIM NOW</div>
             </div>
-            <a href="رابط_الافليت_هنا" class="bg-white text-indigo-600 px-4 py-2 rounded-lg text-xs font-bold">عرض الآن</a>
+            <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-3xl"></div>
         </div>
-    </div>
+    </section>
 
-    <!-- Search & Filters -->
-    <div class="px-4 space-y-3">
-        <input type="text" id="search" placeholder="ابحث باسم الفيلم..." class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-red-500 outline-none">
-        
-        <div class="flex space-x-2 space-x-reverse overflow-x-auto pb-2 scrollbar-hide text-xs">
-            <button onclick="loadTrending()" class="bg-red-600 px-4 py-2 rounded-full whitespace-nowrap">الرائج 🔥</button>
-            <button onclick="showFilter('year')" class="bg-gray-800 px-4 py-2 rounded-full whitespace-nowrap">السنة 🗓️</button>
-            <button onclick="showFilter('rating')" class="bg-gray-800 px-4 py-2 rounded-full whitespace-nowrap">التقييم ⭐</button>
-            <button onclick="showFilter('actor')" class="bg-gray-800 px-4 py-2 rounded-full whitespace-nowrap">الممثل 🧑‍🎤</button>
+    <!-- Search Section -->
+    <section class="px-4 mb-4 space-y-3">
+        <div class="relative">
+            <input type="text" id="searchInput" placeholder="Search movies or TV shows..." 
+                   class="w-full bg-gray-800/60 border border-gray-700 rounded-xl p-3 text-sm pl-10 focus:ring-2 focus:ring-red-500 outline-none transition-all placeholder:text-gray-500">
+            <span class="absolute left-3 top-3.5 opacity-40 text-xs text-gray-400">🔍</span>
         </div>
-    </div>
+        
+        <div class="flex gap-2 overflow-x-auto hide-scroll text-[11px]">
+            <button onclick="fetchMovies('/api/trending')" class="tab-active px-4 py-2 rounded-lg whitespace-nowrap shadow-lg">Trending 🔥</button>
+            <button onclick="alert('Feature coming soon!')" class="bg-gray-800 px-4 py-2 rounded-lg whitespace-nowrap">Year 🗓️</button>
+            <button onclick="alert('Feature coming soon!')" class="bg-gray-800 px-4 py-2 rounded-lg whitespace-nowrap">Rating ⭐</button>
+            <button onclick="alert('Feature coming soon!')" class="bg-gray-800 px-4 py-2 rounded-lg whitespace-nowrap">Actors 🧑‍🎤</button>
+        </div>
+    </section>
 
     <!-- Movie Grid -->
-    <main id="content" class="grid grid-cols-2 gap-4 p-4">
-        <!-- Movies will load here -->
+    <main id="movieGrid" class="grid grid-cols-2 gap-4 px-4 min-h-[50vh]">
+        <!-- Content will be injected here -->
     </main>
 
     <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 glass border-t border-gray-700 p-3 flex justify-around items-center z-50">
-        <button onclick="loadTrending()" class="flex flex-col items-center text-gray-400 focus:text-red-500">
-            <span>🏠</span><span class="text-[10px]">الرئيسية</span>
+    <nav class="fixed bottom-0 inset-x-0 glass border-t border-gray-800 p-3 flex justify-around items-center z-50 bg-gray-950/90 rounded-t-3xl shadow-2xl">
+        <button onclick="fetchMovies('/api/trending')" class="flex flex-col items-center gap-1 text-red-500 transition-all">
+            <span class="text-xl">🏠</span><span class="text-[10px] font-bold">Home</span>
         </button>
-        <button onclick="showGenres()" class="flex flex-col items-center text-gray-400 focus:text-red-500">
-            <span>📂</span><span class="text-[10px]">التصنيفات</span>
+        <button onclick="tg.showAlert('Genres library is being updated.')" class="flex flex-col items-center gap-1 text-gray-500">
+            <span class="text-xl">📁</span><span class="text-[10px]">Genres</span>
         </button>
-        <button onclick="showWatchlist()" class="flex flex-col items-center text-gray-400 focus:text-red-500">
-            <span>⭐</span><span class="text-[10px]">قائمتي</span>
+        <button onclick="tg.showAlert('Syncing your watchlist...')" class="flex flex-col items-center gap-1 text-gray-500">
+            <span class="text-xl">⭐</span><span class="text-[10px]">Watchlist</span>
         </button>
     </nav>
 
-    <!-- Detail Modal -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-90 z-[60] hidden overflow-y-auto p-4">
-        <div id="modal-content"></div>
+    <!-- Movie Details Modal -->
+    <div id="movieModal" class="fixed inset-0 bg-black/95 z-[60] hidden p-4 overflow-y-auto backdrop-blur-md">
+        <button onclick="closeModal()" class="fixed top-6 left-6 w-10 h-10 bg-red-600 rounded-full text-white text-2xl flex items-center justify-center shadow-lg z-[70]">&times;</button>
+        <div id="modalBody" class="mt-12 space-y-5 pb-10"></div>
     </div>
 
     <script>
+        // Initialize Telegram WebApp
         const tg = window.Telegram.WebApp;
         tg.expand();
-        const MONETAG_LINK = "رابط_سمارت_لينك_مونتاج_هنا";
-        const API_URL = "رابط_سيرفر_ريندر_هنا";
 
-        document.getElementById('user-info').innerText = tg.initDataUnsafe.user?.first_name || "";
+        // Constants
+        const API_URL = "https://flickfinder-backend.onrender.com"; 
+        const MONETAG_SMARTLINK = "https://otieu.com/4/10509481"; // Your Provided Link
+        const AFFILIATE_LINK = "https://example.com/your-affiliate-link"; // Replace with your real affiliate link
 
-        async function loadMovies(endpoint) {
-            const container = document.getElementById('content');
-            const response = await fetch(`${API_URL}${endpoint}`);
-            const movies = await response.json();
+        // User Greeting
+        document.getElementById('username').innerText = tg.initDataUnsafe.user?.first_name || "PRO User";
+
+        // Fetch Data Function
+        async function fetchMovies(endpoint) {
+            const grid = document.getElementById('movieGrid');
+            grid.innerHTML = `<div class="col-span-2 flex justify-center py-20"><div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div></div>`;
             
-            container.innerHTML = movies.map(m => `
-                <div class="movie-card bg-gray-900 rounded-xl overflow-hidden shadow-lg border border-gray-800" onclick="openDetails(${m.id}, '${m.media_type || 'movie'}')">
-                    <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-56 object-cover">
-                    <div class="p-2">
-                        <h3 class="text-xs font-bold truncate">${m.title || m.name}</h3>
-                        <div class="flex justify-between mt-1 items-center">
-                            <span class="text-[10px] text-gray-400">${(m.release_date || m.first_air_date || "").substring(0,4)}</span>
-                            <span class="text-[10px] text-yellow-500">⭐ ${m.vote_average.toFixed(1)}</span>
+            try {
+                const res = await fetch(`${API_URL}${endpoint}?lang=en-US`);
+                const movies = await res.json();
+                
+                if (!movies.length) {
+                    grid.innerHTML = `<p class="col-span-2 text-center text-gray-500 text-sm py-10">No results found.</p>`;
+                    return;
+                }
+
+                grid.innerHTML = movies.map(m => `
+                    <div class="movie-card bg-gray-800/40 rounded-2xl overflow-hidden border border-gray-700/50" onclick="showDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                        <div class="relative">
+                            <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-56 object-cover" alt="poster">
+                            <div class="absolute top-2 right-2 bg-black/60 px-2 py-0.5 rounded-md text-[9px] font-bold text-yellow-500 backdrop-blur-sm">
+                                ⭐ ${m.vote_average.toFixed(1)}
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <h3 class="text-[11px] font-bold truncate mb-1 text-gray-100">${m.title || m.name}</h3>
+                            <p class="text-[9px] text-gray-500">${(m.release_date || m.first_air_date || "N/A").substring(0,4)}</p>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch (e) {
+                grid.innerHTML = `<p class="col-span-2 text-center py-20 text-red-500 text-xs">Error connecting to server. Please try again later.</p>`;
+            }
         }
 
-        function openDetails(id, type) {
-            // منطق عرض التفاصيل + زر مشاهدة التريلر (الذي يفتح Smartlink)
-            const modal = document.getElementById('modal');
+        // Show Modal with Movie Details
+        function showDetails(movie) {
+            const modal = document.getElementById('movieModal');
+            const body = document.getElementById('modalBody');
             modal.classList.remove('hidden');
-            // ... جلب تفاصيل الفيلم وعرضها مع زر CTA يوجه لـ MONETAG_LINK
+            document.body.style.overflow = 'hidden'; // Prevent background scroll
+            
+            body.innerHTML = `
+                <div class="relative w-full h-64">
+                    <img src="https://image.tmdb.org/t/p/w500${movie.backdrop_path || movie.poster_path}" class="w-full h-full object-cover rounded-2xl shadow-xl shadow-red-900/10">
+                    <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent">
+                         <h2 class="text-2xl font-bold text-white drop-shadow-lg">${movie.title || movie.name}</h2>
+                    </div>
+                </div>
+                
+                <div class="px-2 space-y-4">
+                    <div class="flex items-center gap-4 text-xs font-semibold">
+                        <span class="bg-gray-800 px-3 py-1.5 rounded-lg">📅 ${movie.release_date || movie.first_air_date}</span>
+                        <span class="bg-yellow-500/10 text-yellow-500 px-3 py-1.5 rounded-lg">⭐ Rating: ${movie.vote_average.toFixed(1)}</span>
+                    </div>
+                    
+                    <p class="text-sm leading-relaxed text-gray-300 font-medium">${movie.overview || "No plot summary available for this title."}</p>
+                    
+                    <!-- 💰 Revenue Source 2: Monetag Smartlink Button -->
+                    <div class="flex flex-col gap-3 pt-6">
+                        <button onclick="handleMonetization()" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-sm shadow-xl shadow-red-600/20 active:scale-95 transition-transform">
+                            🎬 WATCH HD TRAILER (via Sponsor)
+                        </button>
+                        <button onclick="tg.showAlert('Item saved to your local database.')" class="w-full bg-gray-800 text-gray-300 py-4 rounded-xl font-bold text-sm">
+                            ➕ ADD TO WATCHLIST
+                        </button>
+                    </div>
+                </div>
+            `;
         }
 
-        loadMovies('/api/trending');
+        // Logic for Monetag Link (Using Telegram WebApp SDK best practice)
+        function handleMonetization() {
+            // This ensures the link opens in the system browser or overlay smoothly
+            tg.openLink(MONETAG_SMARTLINK);
+        }
+
+        function openAffiliate() {
+            tg.openLink(AFFILIATE_LINK);
+        }
+
+        function closeModal() {
+            document.getElementById('movieModal').classList.add('hidden');
+            document.body.style.overflow = 'auto'; // Restore scroll
+        }
+
+        // Search Input Logic
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            if (query.length > 2) {
+                fetchMovies(`/api/search?q=${encodeURIComponent(query)}`);
+            } else if (query.length === 0) {
+                fetchMovies('/api/trending');
+            }
+        });
+
+        // Initial Load
+        fetchMovies('/api/trending');
     </script>
 </body>
 </html>
