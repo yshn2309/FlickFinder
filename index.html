@@ -32,6 +32,19 @@
         .movie-card:active { transform: scale(0.95); }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .tab-active { background-color: #ef4444; font-weight: bold; }
+        
+        /* 🎨 تأثيرات Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
     </style>
 </head>
 <body class="pb-24">
@@ -102,6 +115,25 @@
     </div>
 
     <script>
+        /**
+         * 🎬 FlickFinder PRO - Ultimate Movie App
+         * 📅 Version: 1.2.0
+         * 
+         * 📋 المميزات:
+         * - عرض الأفلام والمسلسلات من TMDB
+         * - تكامل مع Telegram WebApp
+         * - أنظمة تحقيق دخل متعددة
+         * - دعم متعدد اللغات
+         * 
+         * 🔧 API Endpoints:
+         * - GET /api/trending   → الأفلام الرائجة
+         * - GET /api/search?q=  → بحث
+         * 
+         * ⚠️ المفاتيح المطلوبة في البيئة:
+         * - TMDB_API_KEY: مفتاح واجهة TMDB
+         * - BOT_TOKEN: رمز بوت Telegram (اختياري)
+         */
+
         // Initialize Telegram WebApp
         const tg = window.Telegram.WebApp;
         tg.expand();
@@ -111,20 +143,79 @@
         const MONETAG_SMARTLINK = "https://otieu.com/4/10509481"; // Your Revenue Source
         const AFFILIATE_LINK = "https://example.com/your-affiliate-link"; 
 
+        // ⭐ نظام تقييم المستخدمين (Local Storage)
+        const userRatings = JSON.parse(localStorage.getItem('flickfinder_ratings') || '{}');
+
+        // 🔒 دالة تنظيف النصوص لمنع XSS
+        function sanitize(text) {
+            if (typeof text !== 'string') return text;
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 🔒 دالة للتحقق من الروابط
+        function validateURL(url) {
+            try {
+                const parsed = new URL(url);
+                return ['https:', 'http:'].includes(parsed.protocol);
+            } catch {
+                return false;
+            }
+        }
+
         // User Greeting
         document.getElementById('username').innerText = tg.initDataUnsafe.user?.first_name || "PRO User";
 
-        // Fetch Data Function
+        /**
+         * 📥 جلب الأفلام من الخادم
+         * @param {string} endpoint - مسار الـ API
+         * @returns {Promise} وعد بقائمة الأفلام
+         * @throws {Error} عند فشل الاتصال
+         */
         async function fetchMovies(endpoint) {
             const grid = document.getElementById('movieGrid');
-            grid.innerHTML = `<div class="col-span-2 flex justify-center py-20"><div class="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div></div>`;
+            
+            // 🎨 عرض Skeleton أثناء التحميل
+            grid.innerHTML = `
+                <div class="col-span-2 grid grid-cols-2 gap-4">
+                    ${Array(6).fill().map(() => `
+                        <div class="movie-card bg-gray-800/40 rounded-2xl overflow-hidden border border-gray-700/50">
+                            <div class="skeleton h-56 w-full"></div>
+                            <div class="p-3">
+                                <div class="skeleton h-4 w-3/4 mb-2"></div>
+                                <div class="skeleton h-3 w-1/2"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
             
             try {
                 const res = await fetch(`${API_URL}${endpoint}?lang=en-US`);
+                
+                // 🔍 تحقق من حالة HTTP
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                
                 const movies = await res.json();
                 
+                if (movies.error) {
+                    throw new Error(movies.error);
+                }
+                
                 if (!movies.length) {
-                    grid.innerHTML = `<p class="col-span-2 text-center text-gray-500 text-sm py-10">No content available.</p>`;
+                    grid.innerHTML = `
+                        <div class="col-span-2 text-center py-10">
+                            <div class="text-4xl mb-2">🎬</div>
+                            <p class="text-gray-400 text-sm">No movies found</p>
+                            <button onclick="fetchMovies('/api/trending')" 
+                                    class="mt-4 text-red-500 text-xs font-bold">
+                                ↻ Refresh
+                            </button>
+                        </div>
+                    `;
                     return;
                 }
 
@@ -133,21 +224,38 @@
                         <div class="relative">
                             <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-56 object-cover" alt="poster">
                             <div class="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded-md text-[9px] font-bold text-yellow-500 backdrop-blur-sm">
-                                ⭐ ${m.vote_average.toFixed(1)}
+                                ⭐ ${m.vote_average ? m.vote_average.toFixed(1) : 'N/A'}
                             </div>
                         </div>
                         <div class="p-3">
-                            <h3 class="text-[11px] font-bold truncate mb-1 text-gray-100">${m.title || m.name}</h3>
+                            <h3 class="text-[11px] font-bold truncate mb-1 text-gray-100">${sanitize(m.title || m.name)}</h3>
                             <p class="text-[9px] text-gray-500">${(m.release_date || m.first_air_date || "N/A").substring(0,4)}</p>
                         </div>
                     </div>
                 `).join('');
             } catch (e) {
-                grid.innerHTML = `<p class="col-span-2 text-center py-20 text-red-500 text-xs">Connection error. Please check your internet.</p>`;
+                console.error('Fetch error:', e);
+                
+                grid.innerHTML = `
+                    <div class="col-span-2 text-center py-10">
+                        <div class="text-4xl mb-2 text-red-500">⚠️</div>
+                        <p class="text-gray-400 text-sm mb-2">${sanitize(e.message)}</p>
+                        <button onclick="fetchMovies('/api/trending')" 
+                                class="mt-2 bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold">
+                            Try Again
+                        </button>
+                    </div>
+                `;
             }
         }
 
-        // Show Modal with Movie Details
+        /**
+         * 🎥 عرض تفاصيل الفيلم في نافذة منبثقة
+         * @param {Object} movie - كائن الفيلم من TMDB
+         * @property {string} title - عنوان الفيلم
+         * @property {number} vote_average - التقييم
+         * @property {string} overview - الوصف
+         */
         function showDetails(movie) {
             const modal = document.getElementById('movieModal');
             const body = document.getElementById('modalBody');
@@ -158,17 +266,24 @@
                 <div class="relative w-full h-64">
                     <img src="https://image.tmdb.org/t/p/w500${movie.backdrop_path || movie.poster_path}" class="w-full h-full object-cover rounded-2xl shadow-xl">
                     <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent">
-                         <h2 class="text-2xl font-bold text-white">${movie.title || movie.name}</h2>
+                         <h2 class="text-2xl font-bold text-white">${sanitize(movie.title || movie.name)}</h2>
                     </div>
                 </div>
                 
                 <div class="px-2 space-y-4 text-left">
                     <div class="flex items-center gap-4 text-xs font-semibold">
-                        <span class="bg-gray-800 px-3 py-1.5 rounded-lg">📅 ${movie.release_date || movie.first_air_date}</span>
-                        <span class="bg-yellow-500/10 text-yellow-500 px-3 py-1.5 rounded-lg">⭐ Rating: ${movie.vote_average.toFixed(1)}</span>
+                        <span class="bg-gray-800 px-3 py-1.5 rounded-lg">📅 ${movie.release_date || movie.first_air_date || 'N/A'}</span>
+                        <span class="bg-yellow-500/10 text-yellow-500 px-3 py-1.5 rounded-lg">⭐ Rating: ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
                     </div>
                     
-                    <p class="text-sm leading-relaxed text-gray-300">${movie.overview || "No summary available."}</p>
+                    <p class="text-sm leading-relaxed text-gray-300">${sanitize(movie.overview || "No summary available.")}</p>
+                    
+                    <!-- ⭐ تقييم المستخدم -->
+                    <div class="mt-4 p-4 bg-gray-800/50 rounded-xl">
+                        <h4 class="text-sm font-bold mb-2">Rate this movie:</h4>
+                        ${renderStarRating(movie.id)}
+                        <p class="text-xs text-gray-400 mt-2">Your rating is saved locally</p>
+                    </div>
                     
                     <!-- 💰 Action Buttons -->
                     <div class="flex flex-col gap-3 pt-6">
@@ -183,6 +298,57 @@
             `;
         }
 
+        /**
+         * ⭐ حفظ تقييم المستخدم
+         * @param {number} movieId - معرف الفيلم في TMDB
+         * @param {number} rating - التقييم من 1-5
+         */
+        function rateMovie(movieId, rating) {
+            userRatings[movieId] = {
+                rating: rating,
+                date: new Date().toISOString()
+            };
+            
+            localStorage.setItem('flickfinder_ratings', JSON.stringify(userRatings));
+            
+            // إشعار للمستخدم
+            tg.showAlert(`Thanks! You rated ${rating} stars ⭐`);
+            
+            // تحديث عرض النجوم
+            const modalBody = document.getElementById('modalBody');
+            const ratingSection = modalBody.querySelector('.bg-gray-800\\/50');
+            if (ratingSection) {
+                ratingSection.querySelector('.flex.gap-1').outerHTML = renderStarRating(movieId);
+            }
+        }
+
+        /**
+         * ⭐ عرض نجوم التقييم
+         * @param {number} movieId - معرف الفيلم
+         * @returns {string} HTML لعرض النجوم
+         */
+        function renderStarRating(movieId) {
+            const userRating = userRatings[movieId]?.rating || 0;
+            
+            let starsHTML = '<div class="flex gap-1">';
+            for (let i = 1; i <= 5; i++) {
+                starsHTML += `
+                    <button onclick="rateMovie(${movieId}, ${i})" 
+                            class="text-${i <= userRating ? 'yellow' : 'gray'}-400 text-lg">
+                        ${i <= userRating ? '★' : '☆'}
+                    </button>
+                `;
+            }
+            starsHTML += '</div>';
+            
+            return starsHTML;
+        }
+
+        /**
+         * 💰 إعادة التوجيه لشبكة الإعلانات
+         * @description تفتح رابط Monetag لتحقيق الدخل
+         * @returns {void}
+         */
         function handleMonetization() {
             tg.openLink(MONETAG_SMARTLINK);
         }
