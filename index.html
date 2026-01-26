@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlickFinder PRO | Ultimate Movie App</title>
     
-    <!-- 💰 Monetag SDK Integration (Added as requested) -->
+    <!-- 💰 Monetag SDK Integration -->
     <script src='//libtl.com/sdk.js' data-zone='10509475' data-sdk='show_10509475'></script>
 
     <!-- Telegram WebApp SDK -->
@@ -28,7 +28,10 @@
             backdrop-filter: blur(12px); 
             border-bottom: 1px solid rgba(255,255,255,0.1); 
         }
-        .movie-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .movie-card { 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            cursor: pointer;
+        }
         .movie-card:active { transform: scale(0.95); }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .tab-active { background-color: #ef4444; font-weight: bold; }
@@ -44,6 +47,22 @@
         @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
+        }
+        
+        /* Loader للتحميل */
+        .loader {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(239, 68, 68, 0.3);
+            border-top: 4px solid #ef4444;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -117,31 +136,18 @@
     <script>
         /**
          * 🎬 FlickFinder PRO - Ultimate Movie App
-         * 📅 Version: 1.2.0
-         * 
-         * 📋 المميزات:
-         * - عرض الأفلام والمسلسلات من TMDB
-         * - تكامل مع Telegram WebApp
-         * - أنظمة تحقيق دخل متعددة
-         * - دعم متعدد اللغات
-         * 
-         * 🔧 API Endpoints:
-         * - GET /api/trending   → الأفلام الرائجة
-         * - GET /api/search?q=  → بحث
-         * 
-         * ⚠️ المفاتيح المطلوبة في البيئة:
-         * - TMDB_API_KEY: مفتاح واجهة TMDB
-         * - BOT_TOKEN: رمز بوت Telegram (اختياري)
+         * 📅 Version: 2.0.0 (PythonAnywhere Edition)
+         * 📦 Frontend for FlickFinder Movie Streaming Platform
          */
 
         // Initialize Telegram WebApp
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // ⚙️ Configuration
-        const API_URL = "https://yssef.pythonanywhere.com"; 
-        const MONETAG_SMARTLINK = "https://otieu.com/4/10509481"; // Your Revenue Source
-        const AFFILIATE_LINK = "https://example.com/your-affiliate-link"; 
+        // ⚙️ Configuration - تحديث ليشير إلى PythonAnywhere
+        const API_URL = "https://yssef.pythonanywhere.com";  // ✅ PythonAnywhere backend
+        const MONETAG_SMARTLINK = "https://otieu.com/4/10509481";
+        const AFFILIATE_LINK = "https://example.com/your-affiliate-link";
 
         // ⭐ نظام تقييم المستخدمين (Local Storage)
         const userRatings = JSON.parse(localStorage.getItem('flickfinder_ratings') || '{}');
@@ -154,24 +160,12 @@
             return div.innerHTML;
         }
 
-        // 🔒 دالة للتحقق من الروابط
-        function validateURL(url) {
-            try {
-                const parsed = new URL(url);
-                return ['https:', 'http:'].includes(parsed.protocol);
-            } catch {
-                return false;
-            }
-        }
-
         // User Greeting
         document.getElementById('username').innerText = tg.initDataUnsafe.user?.first_name || "PRO User";
 
         /**
-         * 📥 جلب الأفلام من الخادم
+         * 📥 جلب الأفلام من الخادم - نسخة محسنة
          * @param {string} endpoint - مسار الـ API
-         * @returns {Promise} وعد بقائمة الأفلام
-         * @throws {Error} عند فشل الاتصال
          */
         async function fetchMovies(endpoint) {
             const grid = document.getElementById('movieGrid');
@@ -192,20 +186,51 @@
             `;
             
             try {
-                const res = await fetch(`${API_URL}${endpoint}?lang=en-US`);
+                console.log(`📡 Fetching from: ${API_URL}${endpoint}`);
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+                
+                const res = await fetch(`${API_URL}${endpoint}?lang=en-US&t=${Date.now()}`, {
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json; charset=utf-8'
+                    },
+                    mode: 'cors'
+                });
+                
+                clearTimeout(timeoutId);
                 
                 // 🔍 تحقق من حالة HTTP
                 if (!res.ok) {
                     throw new Error(`HTTP error! status: ${res.status}`);
                 }
                 
-                const movies = await res.json();
-                
-                if (movies.error) {
-                    throw new Error(movies.error);
+                // 🔍 تحقق من نوع المحتوى
+                const contentType = res.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await res.text();
+                    console.warn('Non-JSON response:', text.substring(0, 200));
+                    throw new TypeError(`Expected JSON but got ${contentType}`);
                 }
                 
-                if (!movies.length) {
+                const data = await res.json();
+                console.log('📦 API Response:', data);
+                
+                // 🔍 معالجة بنية البيانات المختلفة
+                let movies;
+                if (Array.isArray(data)) {
+                    movies = data;
+                } else if (data.results && Array.isArray(data.results)) {
+                    movies = data.results;
+                } else if (data.error) {
+                    throw new Error(data.error);
+                } else {
+                    movies = [];
+                }
+                
+                if (!movies || movies.length === 0) {
                     grid.innerHTML = `
                         <div class="col-span-2 text-center py-10">
                             <div class="text-4xl mb-2">🎬</div>
@@ -219,27 +244,45 @@
                     return;
                 }
 
-                grid.innerHTML = movies.map(m => `
-                    <div class="movie-card bg-gray-800/40 rounded-2xl overflow-hidden border border-gray-700/50 shadow-lg" onclick="showDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
-                        <div class="relative">
-                            <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-56 object-cover" alt="poster">
-                            <div class="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded-md text-[9px] font-bold text-yellow-500 backdrop-blur-sm">
-                                ⭐ ${m.vote_average ? m.vote_average.toFixed(1) : 'N/A'}
+                // 🎨 عرض الأفلام
+                grid.innerHTML = movies.map(movie => {
+                    const title = sanitize(movie.title || movie.name || 'Unknown');
+                    const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+                    const year = (movie.release_date || movie.first_air_date || "N/A").substring(0,4);
+                    const poster = movie.poster_path ? 
+                        `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 
+                        'https://via.placeholder.com/300x450';
+                    
+                    return `
+                        <div class="movie-card bg-gray-800/40 rounded-2xl overflow-hidden border border-gray-700/50 shadow-lg" 
+                             onclick="showDetails(${JSON.stringify(movie).replace(/"/g, '&quot;')})">
+                            <div class="relative">
+                                <img src="${poster}" 
+                                     class="w-full h-56 object-cover" 
+                                     alt="${title}"
+                                     loading="lazy">
+                                <div class="absolute top-2 right-2 bg-black/70 px-2 py-0.5 rounded-md text-[9px] font-bold text-yellow-500 backdrop-blur-sm">
+                                    ⭐ ${rating}
+                                </div>
+                            </div>
+                            <div class="p-3">
+                                <h3 class="text-[11px] font-bold truncate mb-1 text-gray-100">${title}</h3>
+                                <p class="text-[9px] text-gray-500">${year}</p>
                             </div>
                         </div>
-                        <div class="p-3">
-                            <h3 class="text-[11px] font-bold truncate mb-1 text-gray-100">${sanitize(m.title || m.name)}</h3>
-                            <p class="text-[9px] text-gray-500">${(m.release_date || m.first_air_date || "N/A").substring(0,4)}</p>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (e) {
-                console.error('Fetch error:', e);
+                    `;
+                }).join('');
+                
+                console.log(`✅ Successfully loaded ${movies.length} movies`);
+                
+            } catch (error) {
+                console.error('❌ Fetch error:', error);
                 
                 grid.innerHTML = `
                     <div class="col-span-2 text-center py-10">
                         <div class="text-4xl mb-2 text-red-500">⚠️</div>
-                        <p class="text-gray-400 text-sm mb-2">${sanitize(e.message)}</p>
+                        <p class="text-gray-400 text-sm mb-2">${sanitize(error.message)}</p>
+                        <p class="text-gray-500 text-xs mb-4">Failed to connect to server</p>
                         <button onclick="fetchMovies('/api/trending')" 
                                 class="mt-2 bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold">
                             Try Again
@@ -251,32 +294,40 @@
 
         /**
          * 🎥 عرض تفاصيل الفيلم في نافذة منبثقة
-         * @param {Object} movie - كائن الفيلم من TMDB
-         * @property {string} title - عنوان الفيلم
-         * @property {number} vote_average - التقييم
-         * @property {string} overview - الوصف
+         * @param {Object} movie - كائن الفيلم
          */
         function showDetails(movie) {
             const modal = document.getElementById('movieModal');
             const body = document.getElementById('modalBody');
             modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; 
+            document.body.style.overflow = 'hidden';
+            
+            const title = sanitize(movie.title || movie.name || 'Unknown');
+            const overview = sanitize(movie.overview || "No summary available.");
+            const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+            const date = movie.release_date || movie.first_air_date || 'N/A';
+            const backdrop = movie.backdrop_path ? 
+                `https://image.tmdb.org/t/p/w780${movie.backdrop_path}` :
+                (movie.poster_path ? `https://image.tmdb.org/t/p/w780${movie.poster_path}` : '');
             
             body.innerHTML = `
                 <div class="relative w-full h-64">
-                    <img src="https://image.tmdb.org/t/p/w500${movie.backdrop_path || movie.poster_path}" class="w-full h-full object-cover rounded-2xl shadow-xl">
+                    <img src="${backdrop}" 
+                         class="w-full h-full object-cover rounded-2xl shadow-xl"
+                         alt="${title}"
+                         onerror="this.src='https://via.placeholder.com/780x439'">
                     <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent">
-                         <h2 class="text-2xl font-bold text-white">${sanitize(movie.title || movie.name)}</h2>
+                         <h2 class="text-2xl font-bold text-white">${title}</h2>
                     </div>
                 </div>
                 
                 <div class="px-2 space-y-4 text-left">
                     <div class="flex items-center gap-4 text-xs font-semibold">
-                        <span class="bg-gray-800 px-3 py-1.5 rounded-lg">📅 ${movie.release_date || movie.first_air_date || 'N/A'}</span>
-                        <span class="bg-yellow-500/10 text-yellow-500 px-3 py-1.5 rounded-lg">⭐ Rating: ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
+                        <span class="bg-gray-800 px-3 py-1.5 rounded-lg">📅 ${date}</span>
+                        <span class="bg-yellow-500/10 text-yellow-500 px-3 py-1.5 rounded-lg">⭐ Rating: ${rating}</span>
                     </div>
                     
-                    <p class="text-sm leading-relaxed text-gray-300">${sanitize(movie.overview || "No summary available.")}</p>
+                    <p class="text-sm leading-relaxed text-gray-300">${overview}</p>
                     
                     <!-- ⭐ تقييم المستخدم -->
                     <div class="mt-4 p-4 bg-gray-800/50 rounded-xl">
@@ -287,10 +338,12 @@
                     
                     <!-- 💰 Action Buttons -->
                     <div class="flex flex-col gap-3 pt-6">
-                        <button onclick="handleMonetization()" class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-sm shadow-xl shadow-red-600/30 active:scale-95 transition-all">
+                        <button onclick="handleMonetization(${movie.id})" 
+                                class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-sm shadow-xl shadow-red-600/30 active:scale-95 transition-all">
                             🎬 WATCH HD TRAILER
                         </button>
-                        <button onclick="tg.showAlert('Saved to watchlist!')" class="w-full bg-gray-800 text-gray-300 py-4 rounded-xl font-bold text-sm">
+                        <button onclick="tg.showAlert('Saved to watchlist!')" 
+                                class="w-full bg-gray-800 text-gray-300 py-4 rounded-xl font-bold text-sm">
                             ➕ ADD TO WATCHLIST
                         </button>
                     </div>
@@ -300,7 +353,7 @@
 
         /**
          * ⭐ حفظ تقييم المستخدم
-         * @param {number} movieId - معرف الفيلم في TMDB
+         * @param {number} movieId - معرف الفيلم
          * @param {number} rating - التقييم من 1-5
          */
         function rateMovie(movieId, rating) {
@@ -311,7 +364,6 @@
             
             localStorage.setItem('flickfinder_ratings', JSON.stringify(userRatings));
             
-            // إشعار للمستخدم
             tg.showAlert(`Thanks! You rated ${rating} stars ⭐`);
             
             // تحديث عرض النجوم
@@ -332,10 +384,11 @@
             
             let starsHTML = '<div class="flex gap-1">';
             for (let i = 1; i <= 5; i++) {
+                const isActive = i <= userRating;
                 starsHTML += `
                     <button onclick="rateMovie(${movieId}, ${i})" 
-                            class="text-${i <= userRating ? 'yellow' : 'gray'}-400 text-lg">
-                        ${i <= userRating ? '★' : '☆'}
+                            class="text-xl ${isActive ? 'text-yellow-400' : 'text-gray-400'} transition-transform active:scale-125">
+                        ${isActive ? '★' : '☆'}
                     </button>
                 `;
             }
@@ -346,34 +399,79 @@
 
         /**
          * 💰 إعادة التوجيه لشبكة الإعلانات
-         * @description تفتح رابط Monetag لتحقيق الدخل
-         * @returns {void}
+         * @param {number} movieId - معرف الفيلم (اختياري)
          */
-        function handleMonetization() {
-            tg.openLink(MONETAG_SMARTLINK);
+        function handleMonetization(movieId = null) {
+            const baseUrl = MONETAG_SMARTLINK;
+            const url = movieId ? `${baseUrl}?movie=${movieId}` : baseUrl;
+            tg.openLink(url);
         }
 
+        /**
+         * 🔗 فتح رابط الإحالة
+         */
         function openAffiliate() {
             tg.openLink(AFFILIATE_LINK);
         }
 
+        /**
+         * ❌ إغلاق النافذة المنبثقة
+         */
         function closeModal() {
             document.getElementById('movieModal').classList.add('hidden');
-            document.body.style.overflow = 'auto'; 
+            document.body.style.overflow = 'auto';
         }
 
-        // Search Logic
+        // 🔍 Search Logic
+        let searchTimeout;
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const query = e.target.value.trim();
+            
+            clearTimeout(searchTimeout);
+            
             if (query.length > 2) {
-                fetchMovies(`/api/search?q=${encodeURIComponent(query)}`);
+                searchTimeout = setTimeout(() => {
+                    fetchMovies(`/api/search?q=${encodeURIComponent(query)}`);
+                }, 500);
             } else if (query.length === 0) {
                 fetchMovies('/api/trending');
             }
         });
 
+        /**
+         * 🧪 اختبار الاتصال بالخادم
+         */
+        async function testConnection() {
+            try {
+                console.log('🧪 Testing server connection...');
+                const res = await fetch(`${API_URL}/health`);
+                const data = await res.json();
+                console.log('✅ Server health:', data);
+                return true;
+            } catch (error) {
+                console.error('❌ Server connection failed:', error);
+                return false;
+            }
+        }
+
         // Initial Load
-        fetchMovies('/api/trending');
+        console.log('🚀 FlickFinder PRO starting...');
+        console.log('🌐 API URL:', API_URL);
+        
+        // اختبار الاتصال ثم تحميل الأفلام
+        testConnection().then(isConnected => {
+            if (isConnected) {
+                fetchMovies('/api/trending');
+            } else {
+                document.getElementById('movieGrid').innerHTML = `
+                    <div class="col-span-2 text-center py-10">
+                        <div class="text-4xl mb-2 text-red-500">🔌</div>
+                        <p class="text-gray-400 text-sm mb-2">Cannot connect to server</p>
+                        <p class="text-gray-500 text-xs">Please check your connection</p>
+                    </div>
+                `;
+            }
+        });
     </script>
 </body>
 </html>
