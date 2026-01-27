@@ -1,172 +1,208 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FlickFinder PRO | Ultimate Movie App</title>
-
-<!-- Monetag SDK -->
-<script src='//libtl.com/sdk.js' data-zone='10509475' data-sdk='show_10509475'></script>
-
-<!-- Telegram WebApp SDK -->
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<!-- Tailwind -->
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
-<style>
-body {
-  background:#0f172a;
-  color:white;
-  font-family:'Inter',sans-serif;
-  user-select:none;
-}
-.glass {
-  background:rgba(30,41,59,.75);
-  backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(255,255,255,.1);
-}
-.movie-card { transition:.3s; cursor:pointer }
-.movie-card:active { transform:scale(.96) }
-.hide-scroll::-webkit-scrollbar { display:none }
-.tab-active { background:#ef4444;font-weight:bold }
-.skeleton {
-  background:linear-gradient(90deg,#1e293b 25%,#334155 50%,#1e293b 75%);
-  background-size:200% 100%;
-  animation:shimmer 1.5s infinite;
-  border-radius:8px
-}
-@keyframes shimmer {
-  0%{background-position:-200% 0}
-  100%{background-position:200% 0}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FlickFinder PRO | Movie & TV Ultimate</title>
+    
+    <!-- 💰 Monetag SDK -->
+    <script src='//libtl.com/sdk.js' data-zone='10509475' data-sdk='show_10509475'></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .movie-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); }
+        .movie-card:active { transform: scale(0.96); }
+        .tab-active { background: #ef4444; color: white; border-color: #ef4444; }
+        .shimmer { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+    </style>
 </head>
+<body class="pb-24 select-none">
 
-<body class="pb-24">
+    <!-- Header -->
+    <header class="glass sticky top-0 z-50 px-4 py-3 flex justify-between items-center shadow-2xl">
+        <div class="flex items-center gap-2">
+            <div class="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-900/40">
+                <span class="font-black text-white text-xl italic">F</span>
+            </div>
+            <div>
+                <h1 class="font-bold text-sm leading-none tracking-tight">FlickFinder</h1>
+                <span class="text-[9px] text-red-500 font-black tracking-widest uppercase opacity-80">Advanced Pro</span>
+            </div>
+        </div>
+        <div id="username" class="text-[10px] font-bold text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-white/5"></div>
+    </header>
 
-<header class="glass sticky top-0 z-50 p-4 flex justify-between items-center">
-  <div class="flex items-center gap-2">
-    <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-      <span class="font-bold italic">F</span>
+    <!-- Search & Filters -->
+    <section class="p-4 space-y-4">
+        <div class="relative">
+            <input type="text" id="searchInput" placeholder="Search movies, TV shows or actors..." 
+                   class="w-full bg-gray-800/40 border border-gray-700/50 rounded-2xl p-4 text-sm pl-12 focus:ring-2 focus:ring-red-500 outline-none transition-all placeholder:text-gray-500">
+            <span class="absolute left-4 top-4.5 opacity-40">🔍</span>
+        </div>
+        
+        <div class="flex gap-2 overflow-x-auto hide-scroll text-[10px] font-black uppercase tracking-wider">
+            <button onclick="fetchMovies('/trending')" id="btnTrend" class="tab-active px-5 py-2.5 rounded-xl whitespace-nowrap border border-white/5">Trending 🔥</button>
+            <button onclick="promptYear()" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap border border-white/5">Year 🗓️</button>
+            <button onclick="showRatingSheet()" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap border border-white/5">Rating ⭐</button>
+            <button onclick="tg.showAlert('Type the actor name in the search bar above.')" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap border border-white/5">Actors 🧑‍🎤</button>
+        </div>
+    </section>
+
+    <!-- Content Grid -->
+    <main id="movieGrid" class="grid grid-cols-2 gap-4 px-4">
+        <div class="shimmer h-64 rounded-3xl"></div>
+        <div class="shimmer h-64 rounded-3xl"></div>
+    </main>
+
+    <!-- Bottom Nav -->
+    <nav class="fixed bottom-0 inset-x-0 glass border-t border-gray-800 p-4 flex justify-around items-center z-50 bg-gray-950/95 rounded-t-[32px] shadow-2xl">
+        <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-red-500 transition-all active:scale-90">
+            <span class="text-2xl">🏠</span><span class="text-[9px] font-black uppercase tracking-tighter">Home</span>
+        </button>
+        <button onclick="tg.showAlert('Global Genres coming in next sync.')" class="flex flex-col items-center gap-1 text-gray-500 active:scale-90">
+            <span class="text-2xl">📁</span><span class="text-[9px] uppercase tracking-tighter font-black">Genres</span>
+        </button>
+        <button onclick="tg.showAlert('Watchlist is now cloud-synced.')" class="flex flex-col items-center gap-1 text-gray-500 active:scale-90">
+            <span class="text-2xl">⭐</span><span class="text-[9px] uppercase tracking-tighter font-black">Saved</span>
+        </button>
+    </nav>
+
+    <!-- Details Modal -->
+    <div id="movieModal" class="fixed inset-0 bg-black/98 z-[60] hidden overflow-y-auto backdrop-blur-2xl">
+        <button onclick="closeModal()" class="fixed top-6 left-6 w-11 h-11 bg-red-600 rounded-2xl text-white text-3xl flex items-center justify-center shadow-2xl z-[70]">&times;</button>
+        <div id="modalBody" class="p-4 pt-16 space-y-6"></div>
     </div>
-    <h1 class="font-bold uppercase">FlickFinder <span class="text-red-500 text-xs">PRO</span></h1>
-  </div>
-  <div id="username" class="text-xs text-gray-400"></div>
-</header>
 
-<section class="p-4">
-  <input id="searchInput" placeholder="Search movies..."
-    class="w-full bg-gray-800/60 border border-gray-700 rounded-xl p-3 text-sm outline-none">
-</section>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
 
-<main id="movieGrid" class="grid grid-cols-2 gap-4 px-4 min-h-[50vh]"></main>
+        const API_URL = "https://yssef.pythonanywhere.com"; 
+        const MONETAG_SMARTLINK = "https://otieu.com/4/10509481";
 
-<nav class="fixed bottom-0 inset-x-0 glass p-3 flex justify-around z-50">
-  <button onclick="loadTrending()" class="text-red-500">🏠</button>
-  <button onclick="tg.showAlert('Coming soon')">⭐</button>
-</nav>
+        document.getElementById('username').innerText = (tg.initDataUnsafe.user?.first_name || "PRO USER").toUpperCase();
 
-<!-- Modal -->
-<div id="movieModal" class="fixed inset-0 bg-black/95 hidden z-50 p-4 overflow-y-auto">
-  <button onclick="closeModal()" class="text-red-500 text-3xl">×</button>
-  <div id="modalBody" class="mt-4"></div>
-</div>
+        async function fetchMovies(endpoint) {
+            const grid = document.getElementById('movieGrid');
+            grid.innerHTML = `<div class="shimmer h-64 rounded-3xl"></div><div class="shimmer h-64 rounded-3xl"></div>`;
+            
+            try {
+                const res = await fetch(`${API_URL}${endpoint}`);
+                const data = await res.json();
+                
+                if (!data || data.length === 0) {
+                    grid.innerHTML = `<p class="col-span-2 text-center text-gray-500 text-xs py-20 font-black uppercase tracking-widest">No results found</p>`;
+                    return;
+                }
 
-<script>
-/* ================= CONFIG ================= */
-const tg = window.Telegram.WebApp;
-tg.expand();
+                grid.innerHTML = data.map(m => `
+                    <div class="movie-card bg-gray-800/30 rounded-[28px] overflow-hidden shadow-xl" onclick="showDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                        <div class="relative aspect-[2/3]">
+                            <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-full object-cover" loading="lazy">
+                            <div class="absolute top-3 right-3 bg-black/80 backdrop-blur-md px-2 py-1 rounded-xl text-[10px] font-black text-yellow-500 border border-white/10">
+                                ⭐ ${m.vote_average ? m.vote_average.toFixed(1) : 'N/A'}
+                            </div>
+                            <div class="absolute bottom-2 left-2 bg-red-600/90 px-2 py-0.5 rounded-lg text-[8px] font-black text-white uppercase">
+                                ${m.media_type === 'tv' ? 'TV Show' : 'Movie'}
+                            </div>
+                        </div>
+                        <div class="p-4 space-y-1">
+                            <h3 class="text-[11px] font-bold truncate text-gray-100 uppercase tracking-tight">${m.title || m.name}</h3>
+                            <p class="text-[9px] font-bold text-gray-500">${(m.release_date || m.first_air_date || "N/A").substring(0,4)}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                grid.innerHTML = `<p class="col-span-2 text-center py-20 text-red-500 text-[10px] font-black uppercase">API Connection Error</p>`;
+            }
+        }
 
-const API_URL = "https://yssef.pythonanywhere.com";
-const MONETAG_LINK = "https://otieu.com/4/10509481";
+        function promptYear() {
+            tg.showPopup({
+                title: 'Search by Year',
+                message: 'Enter a year (e.g., 2024) in the search bar.',
+                buttons: [{id: 'ok', type: 'default', text: 'Got it!'}]
+            });
+            document.getElementById('searchInput').focus();
+        }
 
-/* ================= USER ================= */
-document.getElementById("username").innerText =
-  tg.initDataUnsafe?.user?.first_name || "PRO User";
+        function showRatingSheet() {
+            tg.showActionSheet({
+                title: 'Minimum Rating',
+                buttons: [
+                    {id: '9', text: '⭐ 9+ Masterpiece'},
+                    {id: '8', text: '⭐ 8+ Excellent'},
+                    {id: '7', text: '⭐ 7+ Good Content'},
+                    {id: 'cancel', type: 'cancel', text: 'Close'}
+                ]
+            }, (btnId) => {
+                if (btnId !== 'cancel') fetchMovies(`/discover?rating=${btnId}`);
+            });
+        }
 
-/* ================= HELPERS ================= */
-const sanitize = t => {
-  const d=document.createElement("div");
-  d.textContent=t||"";
-  return d.innerHTML;
-};
+        function showDetails(movie) {
+            const modal = document.getElementById('movieModal');
+            const body = document.getElementById('modalBody');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; 
+            tg.HapticFeedback.impactOccurred('heavy');
+            
+            const isTv = movie.media_type === 'tv' || movie.first_air_date;
 
-/* ================= FETCH ================= */
-async function fetchMovies(endpoint){
-  const grid=document.getElementById("movieGrid");
-  grid.innerHTML=Array(6).fill(`
-    <div class="skeleton h-56"></div>
-  `).join("");
+            body.innerHTML = `
+                <div class="relative w-full h-[48vh] rounded-[40px] overflow-hidden shadow-2xl border border-white/5">
+                    <img src="https://image.tmdb.org/t/p/w780${movie.backdrop_path || movie.poster_path}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+                    <div class="absolute bottom-8 px-6">
+                         <div class="bg-red-600 w-fit px-3 py-1 rounded-full text-[8px] font-black uppercase mb-2 tracking-tighter italic">Premium Access</div>
+                         <h2 class="text-3xl font-black text-white leading-none uppercase italic drop-shadow-2xl">${movie.title || movie.name}</h2>
+                    </div>
+                </div>
+                
+                <div class="px-3 space-y-6">
+                    <div class="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest">
+                        <span class="bg-gray-800 px-4 py-2.5 rounded-2xl border border-white/5">📅 ${movie.release_date || movie.first_air_date}</span>
+                        <span class="bg-yellow-500/10 text-yellow-500 px-4 py-2.5 rounded-2xl border border-yellow-500/20">⭐ RATING: ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
+                    </div>
+                    
+                    <p class="text-[13px] leading-relaxed text-gray-400 font-medium">${movie.overview || "No plot summary currently available."}</p>
+                    
+                    <div class="flex flex-col gap-4 pt-4">
+                        <button onclick="tg.openLink('${MONETAG_SMARTLINK}')" class="w-full bg-white text-black py-5 rounded-[24px] font-black text-sm shadow-2xl active:scale-95 transition-all uppercase italic flex items-center justify-center gap-2">
+                            🎬 Watch Trailer <span class="text-[10px] opacity-50 font-normal">(Sponsor)</span>
+                        </button>
+                        <button onclick="tg.showAlert('Saved to your PRO Watchlist!')" class="w-full bg-gray-800/80 text-gray-300 py-5 rounded-[24px] font-black text-xs border border-white/5 active:scale-95 transition-all">
+                            ➕ ADD TO WATCHLIST
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
 
-  try{
-    const url = `${API_URL}${endpoint}${endpoint.includes("?")?"&":"?"}t=${Date.now()}`;
-    const res = await fetch(url);
-    if(!res.ok) throw new Error("Server error");
-    const data = await res.json();
-    const movies = data.results || [];
+        function closeModal() {
+            document.getElementById('movieModal').classList.add('hidden');
+            document.body.style.overflow = 'auto'; 
+        }
 
-    if(!movies.length){
-      grid.innerHTML="<p class='col-span-2 text-center text-gray-400'>No results</p>";
-      return;
-    }
+        let debounce;
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            clearTimeout(debounce);
+            const val = e.target.value.trim();
+            debounce = setTimeout(() => {
+                if (val.length === 4 && !isNaN(val)) fetchMovies(`/discover?year=${val}`);
+                else if (val.length > 2) fetchMovies(`/search?q=${encodeURIComponent(val)}`);
+                else if (val.length === 0) fetchMovies('/trending');
+            }, 600);
+        });
 
-    grid.innerHTML = movies.map(m=>{
-      const poster = m.poster_path
-        ? `https://image.tmdb.org/t/p/w500${m.poster_path}`
-        : "https://via.placeholder.com/300x450";
-      return `
-        <div class="movie-card bg-gray-800 rounded-xl overflow-hidden"
-          onclick='showDetails(${JSON.stringify(m).replace(/"/g,"&quot;")})'>
-          <img src="${poster}" class="h-56 w-full object-cover">
-          <div class="p-2 text-xs">
-            <b>${sanitize(m.title||m.name)}</b>
-          </div>
-        </div>`;
-    }).join("");
-
-  }catch(e){
-    grid.innerHTML="<p class='col-span-2 text-center text-red-500'>Connection error</p>";
-  }
-}
-
-/* ================= ROUTES ================= */
-function loadTrending(){
-  fetchMovies("/trending");
-}
-
-/* ================= SEARCH ================= */
-let timer;
-document.getElementById("searchInput").addEventListener("input",e=>{
-  clearTimeout(timer);
-  const q=e.target.value.trim();
-  if(q.length>2){
-    timer=setTimeout(()=>fetchMovies(`/search?query=${encodeURIComponent(q)}`),500);
-  }else if(!q){
-    loadTrending();
-  }
-});
-
-/* ================= MODAL ================= */
-function showDetails(movie){
-  document.getElementById("movieModal").classList.remove("hidden");
-  document.getElementById("modalBody").innerHTML=`
-    <h2 class="text-xl font-bold">${sanitize(movie.title||movie.name)}</h2>
-    <p class="text-sm text-gray-400">${sanitize(movie.overview)}</p>
-    <button onclick="tg.openLink('${MONETAG_LINK}')"
-      class="mt-4 bg-red-600 px-4 py-2 rounded">WATCH HD</button>`;
-}
-function closeModal(){
-  document.getElementById("movieModal").classList.add("hidden");
-}
-
-/* ================= INIT ================= */
-fetch(`${API_URL}/health`)
-  .then(r=>r.json())
-  .then(()=>loadTrending())
-  .catch(()=>alert("Backend not reachable"));
-</script>
-
+        fetchMovies('/trending');
+    </script>
 </body>
 </html>
