@@ -7,93 +7,77 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0f172a; color: white; font-family: sans-serif; }
-        .active-tab { background-color: #ef4444 !important; }
-        .card { transition: 0.2s; }
-        .card:active { transform: scale(0.95); }
+        body { background-color: #0f172a; color: white; }
+        .active { background-color: #ef4444 !important; }
     </style>
 </head>
 <body class="pb-20">
-
-    <!-- Header -->
-    <header class="p-4 bg-gray-900 flex justify-between items-center sticky top-0 z-50">
-        <h1 class="font-bold text-red-500">FLICKFINDER PRO</h1>
-        <select id="mediaType" onchange="loadContent()" class="bg-gray-800 text-xs p-2 rounded-lg outline-none">
-            <option value="movie">Movies 🎥</option>
-            <option value="tv">TV Shows 📺</option>
+    <header class="p-4 bg-gray-900 flex justify-between items-center sticky top-0 z-50 shadow-xl">
+        <h1 class="font-bold text-red-500">FLICK PRO</h1>
+        <select id="mediaType" onchange="loadContent()" class="bg-gray-800 text-xs p-2 rounded-lg outline-none border border-gray-700">
+            <option value="movie">MOVIES 🎥</option>
+            <option value="tv">TV SHOWS 📺</option>
         </select>
     </header>
 
-    <!-- Filter Bar -->
-    <div class="p-4 flex gap-2 overflow-x-auto">
-        <button onclick="loadContent('/trending')" class="bg-gray-800 px-4 py-2 rounded-full text-xs whitespace-nowrap active-tab">Trending 🔥</button>
-        <button onclick="applyRatingFilter()" class="bg-gray-800 px-4 py-2 rounded-full text-xs whitespace-nowrap">Top Rated ⭐</button>
-        <button onclick="applyYearFilter()" class="bg-gray-800 px-4 py-2 rounded-full text-xs whitespace-nowrap">Year 🗓️</button>
+    <div class="p-4 flex gap-2 overflow-x-auto hide-scroll">
+        <button onclick="loadContent('/trending')" class="bg-gray-800 px-4 py-2 rounded-full text-[10px] font-bold active">TRENDING</button>
+        <button onclick="applyRating()" class="bg-gray-800 px-4 py-2 rounded-full text-[10px] font-bold">TOP RATED</button>
+        <button onclick="applyYear()" class="bg-gray-800 px-4 py-2 rounded-full text-[10px] font-bold">YEAR</button>
     </div>
 
-    <!-- Content Grid -->
     <div id="grid" class="grid grid-cols-2 gap-4 p-4"></div>
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready(); // تفعيل الجاهزية
+
         const API_URL = "https://yssef.pythonanywhere.com";
         const MONETAG = "https://otieu.com/4/10509481";
 
         async function loadContent(path = '/trending') {
             const grid = document.getElementById('grid');
             const type = document.getElementById('mediaType').value;
-            grid.innerHTML = "<p class='col-span-2 text-center'>Loading...</p>";
+            grid.innerHTML = "<p class='col-span-2 text-center opacity-50'>Syncing Content...</p>";
 
             try {
-                const response = await fetch(`${API_URL}${path}${path.includes('?') ? '&' : '?'}type=${type}`);
+                const url = `${API_URL}${path}${path.includes('?') ? '&' : '?'}type=${type}`;
+                const response = await fetch(url);
                 const data = await response.json();
                 
                 grid.innerHTML = data.map(m => `
-                    <div class="card bg-gray-800 rounded-xl overflow-hidden" onclick="showDetails(${m.id})">
-                        <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-48 object-cover">
-                        <div class="p-2 text-xs font-bold truncate">${m.title || m.name}</div>
+                    <div class="bg-gray-800 rounded-2xl overflow-hidden shadow-lg" onclick="handleItemClick(${m.id})">
+                        <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-56 object-cover">
+                        <div class="p-3 text-[10px] font-bold truncate">${m.title || m.name}</div>
                     </div>
                 `).join('');
-            } catch (e) {
-                grid.innerHTML = "<p class='col-span-2 text-center text-red-500'>Error loading data</p>";
-            }
+            } catch (e) { grid.innerHTML = "<p class='col-span-2 text-center text-red-500'>Error</p>"; }
         }
 
-        function applyRatingFilter() {
-            loadContent('/discover?rating=8');
+        async function handleItemClick(id) {
+            const type = document.getElementById('mediaType').value;
+            
+            // جلب الرابط قبل فتح الـ Popup لضمان السرعة
+            const res = await fetch(`${API_URL}/trailer?id=${id}&type=${type}`);
+            const data = await res.json();
+            const finalLink = data.link || "https://youtube.com";
+
+            tg.showPopup({
+                title: 'Watch Trailer',
+                message: 'Select your preferred link:',
+                buttons: [
+                    {id: 'ad', type: 'default', text: '🚀 High Speed (Sponsor)'},
+                    {id: 'yt', type: 'destructive', text: '▶️ Direct YouTube'}
+                ]
+            }, (id) => {
+                if(id === 'ad') tg.openLink(MONETAG);
+                else if(id === 'yt') tg.openLink(finalLink);
+            });
         }
 
-        function applyYearFilter() {
-            const year = prompt("Enter Year (e.g. 2024):");
-            if (year) loadContent(`/discover?year=${year}`);
-        }
-
-        async function showDetails(id) {
-    const type = document.getElementById('mediaType').value;
-    
-    // 1. جلب رابط التريلر أولاً (لكي نعرف أين نوجه المستخدم بعد الإعلان)
-    const res = await fetch(`${API_URL}/trailer?id=${id}&type=${type}`);
-    const data = await res.json();
-    const movieLink = data.link || "https://www.youtube.com";
-
-    // 2. إظهار خيارات للمستخدم
-    tg.showPopup({
-        title: 'Watch Now',
-        message: 'Choose your streaming server:',
-        buttons: [
-            {id: 'ad', type: 'default', text: '🚀 Fast Server (Support Us)'},
-            {id: 'direct', type: 'destructive', text: '▶️ Direct Link'}
-        ]
-    }, (buttonId) => {
-        if (buttonId === 'ad') {
-            // يفتح الإعلان
-            tg.openLink(MONETAG);
-        } else if (buttonId === 'direct') {
-            // يفتح الفيلم مباشرة
-            tg.openLink(movieLink);
-        }
-    });
-}
+        function applyRating() { loadContent('/discover?rating=8'); }
+        function applyYear() { const y = prompt("Year:"); if(y) loadContent(`/discover?year=${y}`); }
 
         loadContent();
     </script>
