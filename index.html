@@ -68,12 +68,32 @@
             if (year) loadContent(`/discover?year=${year}`);
         }
 
-        function showDetails(id) {
-            const type = document.getElementById('mediaType').value;
-            // توجيه المستخدم مباشرة لرابط الإعلان (Smartlink) لتحقيق الربح فوراً عند الضغط على أي فيلم
-            tg.openLink(`${MONETAG}`);
-            // يمكنك لاحقاً إضافة عرض تفاصيل هنا
+        async function showDetails(id) {
+    const type = document.getElementById('mediaType').value;
+    
+    // 1. جلب رابط التريلر أولاً (لكي نعرف أين نوجه المستخدم بعد الإعلان)
+    const res = await fetch(`${API_URL}/trailer?id=${id}&type=${type}`);
+    const data = await res.json();
+    const movieLink = data.link || "https://www.youtube.com";
+
+    // 2. إظهار خيارات للمستخدم
+    tg.showPopup({
+        title: 'Watch Now',
+        message: 'Choose your streaming server:',
+        buttons: [
+            {id: 'ad', type: 'default', text: '🚀 Fast Server (Support Us)'},
+            {id: 'direct', type: 'destructive', text: '▶️ Direct Link'}
+        ]
+    }, (buttonId) => {
+        if (buttonId === 'ad') {
+            // يفتح الإعلان
+            tg.openLink(MONETAG);
+        } else if (buttonId === 'direct') {
+            // يفتح الفيلم مباشرة
+            tg.openLink(movieLink);
         }
+    });
+}
 
         loadContent();
     </script>
