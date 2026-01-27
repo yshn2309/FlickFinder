@@ -3,20 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlickFinder PRO | Movie & TV Ultimate</title>
-    
-    <!-- 💰 Monetag SDK -->
+    <title>FlickFinder PRO | Ultimate Fix</title>
     <script src='//libtl.com/sdk.js' data-zone='10509475' data-sdk='show_10509475'></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
     <style>
         body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .movie-card { transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); }
-        .movie-card:active { transform: scale(0.96); }
-        .tab-active { background: #ef4444; color: white; border-color: #ef4444; }
+        .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .movie-card { transition: all 0.3s ease; }
+        .tab-active { background: #ef4444 !important; color: white !important; }
         .shimmer { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .hide-scroll::-webkit-scrollbar { display: none; }
@@ -27,18 +23,15 @@
     <!-- Header -->
     <header class="glass sticky top-0 z-50 px-4 py-3 flex justify-between items-center shadow-2xl">
         <div class="flex items-center gap-2">
-            <div class="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-900/40">
-                <span class="font-black text-white text-xl italic">F</span>
+            <div class="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span class="font-black text-white text-xl">F</span>
             </div>
-            <div>
-                <h1 class="font-bold text-sm leading-none tracking-tight">FlickFinder</h1>
-                <span class="text-[9px] text-red-500 font-black tracking-widest uppercase opacity-80">Advanced Pro</span>
-            </div>
+            <h1 class="font-bold text-sm leading-none">FlickFinder <br><span class="text-[9px] text-red-500 uppercase">Pro Elite</span></h1>
         </div>
-        <div id="username" class="text-[10px] font-bold text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full border border-white/5"></div>
+        <div id="username" class="text-[10px] font-bold text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full"></div>
     </header>
 
-    <!-- Search & Filters -->
+    <!-- Search Section -->
     <section class="p-4 space-y-4">
         <div class="relative">
             <input type="text" id="searchInput" placeholder="Search movies, TV shows or actors..." 
@@ -46,48 +39,54 @@
             <span class="absolute left-4 top-4.5 opacity-40">🔍</span>
         </div>
         
-        <div class="flex gap-2 overflow-x-auto hide-scroll text-[10px] font-black uppercase tracking-wider">
-            <button onclick="fetchMovies('/trending')" id="btnTrend" class="tab-active px-5 py-2.5 rounded-xl whitespace-nowrap border border-white/5">Trending 🔥</button>
-            <button onclick="promptYear()" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap border border-white/5">Year 🗓️</button>
-            <button onclick="showRatingSheet()" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap border border-white/5">Rating ⭐</button>
-            <button onclick="tg.showAlert('Type the actor name in the search bar above.')" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap border border-white/5">Actors 🧑‍🎤</button>
+        <!-- Filters Bar -->
+        <div id="filterButtons" class="flex gap-2 overflow-x-auto hide-scroll text-[10px] font-black uppercase tracking-wider">
+            <button onclick="changeTab(this, '/trending')" class="tab-active bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap">Trending 🔥</button>
+            <button onclick="promptYearSearch(this)" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap">Year 🗓️</button>
+            <button onclick="showRatingActionSheet(this)" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap">Rating ⭐</button>
+            <button onclick="tg.showAlert('To search by actor, just type their name in the search bar above!')" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap">Actors 🧑‍🎤</button>
         </div>
     </section>
 
-    <!-- Content Grid -->
-    <main id="movieGrid" class="grid grid-cols-2 gap-4 px-4">
+    <!-- Content -->
+    <main id="movieGrid" class="grid grid-cols-2 gap-4 px-4 min-h-[40vh]">
         <div class="shimmer h-64 rounded-3xl"></div>
         <div class="shimmer h-64 rounded-3xl"></div>
     </main>
 
-    <!-- Bottom Nav -->
-    <nav class="fixed bottom-0 inset-x-0 glass border-t border-gray-800 p-4 flex justify-around items-center z-50 bg-gray-950/95 rounded-t-[32px] shadow-2xl">
-        <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-red-500 transition-all active:scale-90">
-            <span class="text-2xl">🏠</span><span class="text-[9px] font-black uppercase tracking-tighter">Home</span>
-        </button>
-        <button onclick="tg.showAlert('Global Genres coming in next sync.')" class="flex flex-col items-center gap-1 text-gray-500 active:scale-90">
-            <span class="text-2xl">📁</span><span class="text-[9px] uppercase tracking-tighter font-black">Genres</span>
-        </button>
-        <button onclick="tg.showAlert('Watchlist is now cloud-synced.')" class="flex flex-col items-center gap-1 text-gray-500 active:scale-90">
-            <span class="text-2xl">⭐</span><span class="text-[9px] uppercase tracking-tighter font-black">Saved</span>
-        </button>
-    </nav>
-
-    <!-- Details Modal -->
+    <!-- Modal Detail -->
     <div id="movieModal" class="fixed inset-0 bg-black/98 z-[60] hidden overflow-y-auto backdrop-blur-2xl">
         <button onclick="closeModal()" class="fixed top-6 left-6 w-11 h-11 bg-red-600 rounded-2xl text-white text-3xl flex items-center justify-center shadow-2xl z-[70]">&times;</button>
         <div id="modalBody" class="p-4 pt-16 space-y-6"></div>
     </div>
 
+    <!-- Nav Bottom -->
+    <nav class="fixed bottom-0 inset-x-0 glass border-t border-gray-800 p-4 flex justify-around items-center z-50 bg-gray-950/95 rounded-t-[32px]">
+        <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-red-500 transition-all active:scale-90">
+            <span class="text-2xl">🏠</span><span class="text-[9px] font-black uppercase">Home</span>
+        </button>
+        <button onclick="tg.showAlert('Genre Explorer coming soon!')" class="flex flex-col items-center gap-1 text-gray-500">
+            <span class="text-2xl">📁</span><span class="text-[9px] uppercase font-black">Genres</span>
+        </button>
+        <button onclick="tg.showAlert('Syncing Watchlist...')" class="flex flex-col items-center gap-1 text-gray-500">
+            <span class="text-2xl">⭐</span><span class="text-[9px] uppercase font-black">Saved</span>
+        </button>
+    </nav>
+
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.enableClosingConfirmation();
 
         const API_URL = "https://yssef.pythonanywhere.com"; 
         const MONETAG_SMARTLINK = "https://otieu.com/4/10509481";
 
-        document.getElementById('username').innerText = (tg.initDataUnsafe.user?.first_name || "PRO USER").toUpperCase();
+        document.getElementById('username').innerText = (tg.initDataUnsafe.user?.first_name || "PRO").toUpperCase();
+
+        function changeTab(btn, endpoint) {
+            document.querySelectorAll('#filterButtons button').forEach(b => b.classList.remove('tab-active'));
+            btn.classList.add('tab-active');
+            fetchMovies(endpoint);
+        }
 
         async function fetchMovies(endpoint) {
             const grid = document.getElementById('movieGrid');
@@ -98,52 +97,54 @@
                 const data = await res.json();
                 
                 if (!data || data.length === 0) {
-                    grid.innerHTML = `<p class="col-span-2 text-center text-gray-500 text-xs py-20 font-black uppercase tracking-widest">No results found</p>`;
+                    grid.innerHTML = `<p class="col-span-2 text-center text-gray-500 text-xs py-20 uppercase font-black">No results found</p>`;
                     return;
                 }
 
                 grid.innerHTML = data.map(m => `
-                    <div class="movie-card bg-gray-800/30 rounded-[28px] overflow-hidden shadow-xl" onclick="showDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                    <div class="movie-card bg-gray-800/30 rounded-[28px] overflow-hidden" onclick="showDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
                         <div class="relative aspect-[2/3]">
-                            <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-full object-cover" loading="lazy">
-                            <div class="absolute top-3 right-3 bg-black/80 backdrop-blur-md px-2 py-1 rounded-xl text-[10px] font-black text-yellow-500 border border-white/10">
+                            <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-full object-cover">
+                            <div class="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] font-black text-yellow-500">
                                 ⭐ ${m.vote_average ? m.vote_average.toFixed(1) : 'N/A'}
                             </div>
-                            <div class="absolute bottom-2 left-2 bg-red-600/90 px-2 py-0.5 rounded-lg text-[8px] font-black text-white uppercase">
-                                ${m.media_type === 'tv' ? 'TV Show' : 'Movie'}
-                            </div>
                         </div>
-                        <div class="p-4 space-y-1">
-                            <h3 class="text-[11px] font-bold truncate text-gray-100 uppercase tracking-tight">${m.title || m.name}</h3>
-                            <p class="text-[9px] font-bold text-gray-500">${(m.release_date || m.first_air_date || "N/A").substring(0,4)}</p>
+                        <div class="p-3">
+                            <h3 class="text-[10px] font-bold truncate text-gray-100 uppercase">${m.title || m.name}</h3>
+                            <p class="text-[8px] font-bold text-gray-500">${(m.release_date || m.first_air_date || "N/A").substring(0,4)}</p>
                         </div>
                     </div>
                 `).join('');
             } catch (e) {
-                grid.innerHTML = `<p class="col-span-2 text-center py-20 text-red-500 text-[10px] font-black uppercase">API Connection Error</p>`;
+                grid.innerHTML = `<p class="col-span-2 text-center py-20 text-red-500 text-[10px] font-black">CONNECTION ERROR</p>`;
             }
         }
 
-        function promptYear() {
+        // --- ميزة البحث بالسنة ---
+        function promptYearSearch(btn) {
+            // سنطلب من المستخدم كتابة السنة في حقل البحث لضمان أفضل تجربة
             tg.showPopup({
-                title: 'Search by Year',
-                message: 'Enter a year (e.g., 2024) in the search bar.',
-                buttons: [{id: 'ok', type: 'default', text: 'Got it!'}]
+                title: 'Year Search',
+                message: 'Please type the year (e.g., 2024) in the search box to see best releases.',
+                buttons: [{id: 'ok', text: 'OK'}]
             });
             document.getElementById('searchInput').focus();
         }
 
-        function showRatingSheet() {
+        // --- ميزة البحث بالتقييم ---
+        function showRatingActionSheet(btn) {
             tg.showActionSheet({
-                title: 'Minimum Rating',
+                title: 'Filter by Minimum Rating',
                 buttons: [
-                    {id: '9', text: '⭐ 9+ Masterpiece'},
-                    {id: '8', text: '⭐ 8+ Excellent'},
-                    {id: '7', text: '⭐ 7+ Good Content'},
+                    {id: '9', text: '⭐ 9+ Masterpieces'},
+                    {id: '8', text: '⭐ 8+ Must Watch'},
+                    {id: '7', text: '⭐ 7+ Recommended'},
                     {id: 'cancel', type: 'cancel', text: 'Close'}
                 ]
             }, (btnId) => {
-                if (btnId !== 'cancel') fetchMovies(`/discover?rating=${btnId}`);
+                if (btnId !== 'cancel') {
+                    changeTab(btn, `/discover?rating=${btnId}`);
+                }
             });
         }
 
@@ -152,35 +153,25 @@
             const body = document.getElementById('modalBody');
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden'; 
-            tg.HapticFeedback.impactOccurred('heavy');
+            tg.HapticFeedback.impactOccurred('medium');
             
-            const isTv = movie.media_type === 'tv' || movie.first_air_date;
-
             body.innerHTML = `
-                <div class="relative w-full h-[48vh] rounded-[40px] overflow-hidden shadow-2xl border border-white/5">
+                <div class="relative w-full h-[45vh] rounded-[40px] overflow-hidden shadow-2xl">
                     <img src="https://image.tmdb.org/t/p/w780${movie.backdrop_path || movie.poster_path}" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
-                    <div class="absolute bottom-8 px-6">
-                         <div class="bg-red-600 w-fit px-3 py-1 rounded-full text-[8px] font-black uppercase mb-2 tracking-tighter italic">Premium Access</div>
-                         <h2 class="text-3xl font-black text-white leading-none uppercase italic drop-shadow-2xl">${movie.title || movie.name}</h2>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                    <div class="absolute bottom-8 px-6 text-left">
+                         <h2 class="text-2xl font-black text-white leading-tight uppercase italic">${movie.title || movie.name}</h2>
                     </div>
                 </div>
-                
-                <div class="px-3 space-y-6">
-                    <div class="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest">
-                        <span class="bg-gray-800 px-4 py-2.5 rounded-2xl border border-white/5">📅 ${movie.release_date || movie.first_air_date}</span>
-                        <span class="bg-yellow-500/10 text-yellow-500 px-4 py-2.5 rounded-2xl border border-yellow-500/20">⭐ RATING: ${movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
+                <div class="px-3 space-y-5 text-left">
+                    <div class="flex gap-2 text-[10px] font-black uppercase">
+                        <span class="bg-red-600 px-3 py-2 rounded-xl">📅 ${movie.release_date || movie.first_air_date}</span>
+                        <span class="bg-gray-800 px-3 py-2 rounded-xl">⭐ ${movie.vote_average.toFixed(1)}</span>
                     </div>
-                    
-                    <p class="text-[13px] leading-relaxed text-gray-400 font-medium">${movie.overview || "No plot summary currently available."}</p>
-                    
-                    <div class="flex flex-col gap-4 pt-4">
-                        <button onclick="tg.openLink('${MONETAG_SMARTLINK}')" class="w-full bg-white text-black py-5 rounded-[24px] font-black text-sm shadow-2xl active:scale-95 transition-all uppercase italic flex items-center justify-center gap-2">
-                            🎬 Watch Trailer <span class="text-[10px] opacity-50 font-normal">(Sponsor)</span>
-                        </button>
-                        <button onclick="tg.showAlert('Saved to your PRO Watchlist!')" class="w-full bg-gray-800/80 text-gray-300 py-5 rounded-[24px] font-black text-xs border border-white/5 active:scale-95 transition-all">
-                            ➕ ADD TO WATCHLIST
-                        </button>
+                    <p class="text-[12px] text-gray-400 leading-relaxed font-medium">${movie.overview || "No summary available."}</p>
+                    <div class="flex flex-col gap-3 pt-4">
+                        <button onclick="tg.openLink('${MONETAG_SMARTLINK}')" class="w-full bg-white text-black py-5 rounded-[22px] font-black text-sm shadow-2xl active:scale-95 uppercase italic">🎬 Watch Trailer</button>
+                        <button onclick="tg.showAlert('Saved!')" class="w-full bg-gray-800/80 text-gray-300 py-5 rounded-[22px] font-bold text-xs uppercase">➕ Watchlist</button>
                     </div>
                 </div>
             `;
@@ -191,17 +182,19 @@
             document.body.style.overflow = 'auto'; 
         }
 
-        let debounce;
+        // تحسين البحث الذكي (سنة أو نص)
+        let searchTimer;
         document.getElementById('searchInput').addEventListener('input', (e) => {
-            clearTimeout(debounce);
+            clearTimeout(searchTimer);
             const val = e.target.value.trim();
-            debounce = setTimeout(() => {
+            searchTimer = setTimeout(() => {
                 if (val.length === 4 && !isNaN(val)) fetchMovies(`/discover?year=${val}`);
                 else if (val.length > 2) fetchMovies(`/search?q=${encodeURIComponent(val)}`);
                 else if (val.length === 0) fetchMovies('/trending');
             }, 600);
         });
 
+        // تشغيل الأفلام الرائجة عند البداية
         fetchMovies('/trending');
     </script>
 </body>
