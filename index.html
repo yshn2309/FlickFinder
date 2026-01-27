@@ -3,198 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlickFinder PRO | Ultimate Fix</title>
+    <title>FlickFinder PRO | Final Fixed</title>
     <script src='//libtl.com/sdk.js' data-zone='10509475' data-sdk='show_10509475'></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .movie-card { transition: all 0.3s ease; }
+        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .movie-card:active { transform: scale(0.96); }
         .tab-active { background: #ef4444 !important; color: white !important; }
-        .shimmer { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .hide-scroll::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="pb-24 select-none">
+<body class="pb-24 overflow-x-hidden">
 
-    <!-- Header -->
-    <header class="glass sticky top-0 z-50 px-4 py-3 flex justify-between items-center shadow-2xl">
+    <header class="glass sticky top-0 z-50 p-4 flex justify-between items-center">
         <div class="flex items-center gap-2">
-            <div class="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span class="font-black text-white text-xl">F</span>
-            </div>
-            <h1 class="font-bold text-sm leading-none">FlickFinder <br><span class="text-[9px] text-red-500 uppercase">Pro Elite</span></h1>
+            <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center font-black italic">F</div>
+            <h1 class="font-bold text-sm tracking-tight uppercase">FlickFinder <span class="text-red-500">PRO</span></h1>
         </div>
-        <div id="username" class="text-[10px] font-bold text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-full"></div>
+        <div id="userGreeting" class="text-[10px] bg-gray-800 px-3 py-1 rounded-full text-gray-400 font-bold"></div>
     </header>
 
     <!-- Search Section -->
     <section class="p-4 space-y-4">
-        <div class="relative">
-            <input type="text" id="searchInput" placeholder="Search movies, TV shows or actors..." 
-                   class="w-full bg-gray-800/40 border border-gray-700/50 rounded-2xl p-4 text-sm pl-12 focus:ring-2 focus:ring-red-500 outline-none transition-all placeholder:text-gray-500">
-            <span class="absolute left-4 top-4.5 opacity-40">🔍</span>
-        </div>
+        <input type="text" id="searchInput" placeholder="Search movies, series, actors..." 
+               class="w-full bg-gray-800/50 border border-gray-700 rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-red-500">
         
-        <!-- Filters Bar -->
-        <div id="filterButtons" class="flex gap-2 overflow-x-auto hide-scroll text-[10px] font-black uppercase tracking-wider">
+        <div id="filterBar" class="flex gap-2 overflow-x-auto hide-scroll text-[10px] font-black uppercase">
             <button onclick="changeTab(this, '/trending')" class="tab-active bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap">Trending 🔥</button>
-            <button onclick="promptYearSearch(this)" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap">Year 🗓️</button>
-            <button onclick="showRatingActionSheet(this)" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap">Rating ⭐</button>
-            <button onclick="tg.showAlert('To search by actor, just type their name in the search bar above!')" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap">Actors 🧑‍🎤</button>
+            <button onclick="promptYear(this)" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap">Year 🗓️</button>
+            <button onclick="showRatingSheet(this)" class="bg-gray-800/60 px-5 py-2.5 rounded-xl whitespace-nowrap">Rating ⭐</button>
         </div>
     </section>
 
     <!-- Content -->
-    <main id="movieGrid" class="grid grid-cols-2 gap-4 px-4 min-h-[40vh]">
-        <div class="shimmer h-64 rounded-3xl"></div>
-        <div class="shimmer h-64 rounded-3xl"></div>
-    </main>
+    <main id="movieGrid" class="grid grid-cols-2 gap-4 px-4"></main>
 
     <!-- Modal Detail -->
-    <div id="movieModal" class="fixed inset-0 bg-black/98 z-[60] hidden overflow-y-auto backdrop-blur-2xl">
-        <button onclick="closeModal()" class="fixed top-6 left-6 w-11 h-11 bg-red-600 rounded-2xl text-white text-3xl flex items-center justify-center shadow-2xl z-[70]">&times;</button>
-        <div id="modalBody" class="p-4 pt-16 space-y-6"></div>
+    <div id="movieModal" class="fixed inset-0 bg-black/98 z-[60] hidden overflow-y-auto p-4 pt-16">
+        <button onclick="closeModal()" class="fixed top-6 left-6 w-10 h-10 bg-red-600 rounded-full text-white text-2xl shadow-xl z-[70]">&times;</button>
+        <div id="modalBody" class="space-y-6 pb-10 text-left"></div>
     </div>
 
-    <!-- Nav Bottom -->
-    <nav class="fixed bottom-0 inset-x-0 glass border-t border-gray-800 p-4 flex justify-around items-center z-50 bg-gray-950/95 rounded-t-[32px]">
-        <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-red-500 transition-all active:scale-90">
-            <span class="text-2xl">🏠</span><span class="text-[9px] font-black uppercase">Home</span>
+    <!-- Navigation -->
+    <nav class="fixed bottom-0 inset-x-0 glass p-4 flex justify-around items-center z-50 bg-gray-950/95 rounded-t-[30px]">
+        <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-red-500">
+            <span class="text-xl">🏠</span><span class="text-[9px] font-black uppercase">Explore</span>
         </button>
-        <button onclick="tg.showAlert('Genre Explorer coming soon!')" class="flex flex-col items-center gap-1 text-gray-500">
-            <span class="text-2xl">📁</span><span class="text-[9px] uppercase font-black">Genres</span>
-        </button>
-        <button onclick="tg.showAlert('Syncing Watchlist...')" class="flex flex-col items-center gap-1 text-gray-500">
-            <span class="text-2xl">⭐</span><span class="text-[9px] uppercase font-black">Saved</span>
+        <button onclick="tg.showAlert('Coming soon!')" class="flex flex-col items-center gap-1 text-gray-500">
+            <span class="text-xl">📁</span><span class="text-[9px] font-black uppercase">Genres</span>
         </button>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-
         const API_URL = "https://yssef.pythonanywhere.com"; 
-        const MONETAG_SMARTLINK = "https://otieu.com/4/10509481";
+        const MONETAG_LINK = "https://otieu.com/4/10509481";
 
-        document.getElementById('username').innerText = (tg.initDataUnsafe.user?.first_name || "PRO").toUpperCase();
-
-        function changeTab(btn, endpoint) {
-            document.querySelectorAll('#filterButtons button').forEach(b => b.classList.remove('tab-active'));
-            btn.classList.add('tab-active');
-            fetchMovies(endpoint);
-        }
+        document.getElementById('userGreeting').innerText = (tg.initDataUnsafe.user?.first_name || "USER").toUpperCase();
 
         async function fetchMovies(endpoint) {
             const grid = document.getElementById('movieGrid');
-            grid.innerHTML = `<div class="shimmer h-64 rounded-3xl"></div><div class="shimmer h-64 rounded-3xl"></div>`;
-            
+            grid.innerHTML = `<p class="col-span-2 text-center py-20 text-gray-500 animate-pulse">LOADING...</p>`;
             try {
                 const res = await fetch(`${API_URL}${endpoint}`);
                 const data = await res.json();
-                
-                if (!data || data.length === 0) {
-                    grid.innerHTML = `<p class="col-span-2 text-center text-gray-500 text-xs py-20 uppercase font-black">No results found</p>`;
-                    return;
-                }
-
                 grid.innerHTML = data.map(m => `
-                    <div class="movie-card bg-gray-800/30 rounded-[28px] overflow-hidden" onclick="showDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                    <div class="movie-card bg-gray-800/30 rounded-[24px] overflow-hidden" onclick="openDetails(${JSON.stringify(m).replace(/"/g, '&quot;')})">
                         <div class="relative aspect-[2/3]">
                             <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-full object-cover">
-                            <div class="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] font-black text-yellow-500">
-                                ⭐ ${m.vote_average ? m.vote_average.toFixed(1) : 'N/A'}
-                            </div>
+                            <div class="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded-lg text-[9px] font-black text-yellow-500">⭐ ${m.vote_average?.toFixed(1) || 'N/A'}</div>
                         </div>
                         <div class="p-3">
-                            <h3 class="text-[10px] font-bold truncate text-gray-100 uppercase">${m.title || m.name}</h3>
-                            <p class="text-[8px] font-bold text-gray-500">${(m.release_date || m.first_air_date || "N/A").substring(0,4)}</p>
+                            <h3 class="text-[10px] font-bold truncate uppercase">${m.title || m.name}</h3>
+                            <p class="text-[8px] text-gray-500">${(m.release_date || m.first_air_date || "").substring(0,4)}</p>
                         </div>
                     </div>
                 `).join('');
-            } catch (e) {
-                grid.innerHTML = `<p class="col-span-2 text-center py-20 text-red-500 text-[10px] font-black">CONNECTION ERROR</p>`;
-            }
+            } catch (e) { grid.innerHTML = `<p class="col-span-2 text-center text-red-500">API ERROR</p>`; }
         }
 
-        // --- ميزة البحث بالسنة ---
-        function promptYearSearch(btn) {
-            // سنطلب من المستخدم كتابة السنة في حقل البحث لضمان أفضل تجربة
-            tg.showPopup({
-                title: 'Year Search',
-                message: 'Please type the year (e.g., 2024) in the search box to see best releases.',
-                buttons: [{id: 'ok', text: 'OK'}]
-            });
+        function changeTab(btn, endpoint) {
+            document.querySelectorAll('#filterBar button').forEach(b => b.classList.remove('tab-active'));
+            if(btn) btn.classList.add('tab-active');
+            fetchMovies(endpoint);
+        }
+
+        function promptYear(btn) {
+            tg.showPopup({ title: 'Search by Year', message: 'Type any year (e.g. 2024) in the search bar.', buttons: [{id: 'ok', text: 'OK'}] });
             document.getElementById('searchInput').focus();
         }
 
-        // --- ميزة البحث بالتقييم ---
-        function showRatingActionSheet(btn) {
-            tg.showActionSheet({
-                title: 'Filter by Minimum Rating',
-                buttons: [
-                    {id: '9', text: '⭐ 9+ Masterpieces'},
-                    {id: '8', text: '⭐ 8+ Must Watch'},
-                    {id: '7', text: '⭐ 7+ Recommended'},
-                    {id: 'cancel', type: 'cancel', text: 'Close'}
-                ]
-            }, (btnId) => {
-                if (btnId !== 'cancel') {
-                    changeTab(btn, `/discover?rating=${btnId}`);
-                }
+        function showRatingSheet(btn) {
+            tg.showActionSheet({ title: 'Select Rating', buttons: [{id:'9', text:'⭐ 9+ Awesome'},{id:'8', text:'⭐ 8+ Great'},{id:'7', text:'⭐ 7+ Good'}] }, (id) => {
+                if(id) changeTab(btn, `/discover?rating=${id}`);
             });
         }
 
-        function showDetails(movie) {
+        async function openDetails(movie) {
             const modal = document.getElementById('movieModal');
             const body = document.getElementById('modalBody');
             modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden'; 
-            tg.HapticFeedback.impactOccurred('medium');
+            document.body.style.overflow = 'hidden';
             
+            body.innerHTML = `<p class="text-center py-20 text-gray-500">Fetching HD Details...</p>`;
+            
+            // جلب رابط التريلر من السيرفر
+            const type = movie.media_type || (movie.first_air_date ? 'tv' : 'movie');
+            const trailerRes = await fetch(`${API_URL}/trailer?id=${movie.id}&type=${type}`);
+            const trailerData = await trailerRes.json();
+            const youtubeLink = trailerData.link;
+
             body.innerHTML = `
-                <div class="relative w-full h-[45vh] rounded-[40px] overflow-hidden shadow-2xl">
+                <div class="relative w-full h-[40vh] rounded-[30px] overflow-hidden">
                     <img src="https://image.tmdb.org/t/p/w780${movie.backdrop_path || movie.poster_path}" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
-                    <div class="absolute bottom-8 px-6 text-left">
-                         <h2 class="text-2xl font-black text-white leading-tight uppercase italic">${movie.title || movie.name}</h2>
-                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
+                    <h2 class="absolute bottom-4 px-4 text-2xl font-black uppercase italic">${movie.title || movie.name}</h2>
                 </div>
-                <div class="px-3 space-y-5 text-left">
-                    <div class="flex gap-2 text-[10px] font-black uppercase">
-                        <span class="bg-red-600 px-3 py-2 rounded-xl">📅 ${movie.release_date || movie.first_air_date}</span>
-                        <span class="bg-gray-800 px-3 py-2 rounded-xl">⭐ ${movie.vote_average.toFixed(1)}</span>
+                <div class="px-2 space-y-4">
+                    <div class="flex gap-2 text-[10px] font-black">
+                        <span class="bg-red-600 px-3 py-1.5 rounded-lg italic">PREMIUM HD</span>
+                        <span class="bg-gray-800 px-3 py-1.5 rounded-lg tracking-widest">⭐ ${movie.vote_average?.toFixed(1)}</span>
                     </div>
-                    <p class="text-[12px] text-gray-400 leading-relaxed font-medium">${movie.overview || "No summary available."}</p>
+                    <p class="text-[12px] text-gray-400 leading-relaxed">${movie.overview || "No description."}</p>
+                    
+                    <!-- 💰 بوابة الإعلانات الذكية -->
                     <div class="flex flex-col gap-3 pt-4">
-                        <button onclick="tg.openLink('${MONETAG_SMARTLINK}')" class="w-full bg-white text-black py-5 rounded-[22px] font-black text-sm shadow-2xl active:scale-95 uppercase italic">🎬 Watch Trailer</button>
-                        <button onclick="tg.showAlert('Saved!')" class="w-full bg-gray-800/80 text-gray-300 py-5 rounded-[22px] font-bold text-xs uppercase">➕ Watchlist</button>
+                        <button onclick="handleTrailerClick('${youtubeLink}')" class="w-full bg-white text-black py-5 rounded-[20px] font-black text-sm uppercase italic shadow-2xl active:scale-95 transition-all">
+                            🎬 Watch Trailer (HD)
+                        </button>
+                        <button onclick="tg.showAlert('Saved to your collection!')" class="w-full bg-gray-800 text-gray-300 py-5 rounded-[20px] font-bold text-xs uppercase">
+                            ➕ Save to Watchlist
+                        </button>
                     </div>
                 </div>
             `;
         }
 
-        function closeModal() {
-            document.getElementById('movieModal').classList.add('hidden');
-            document.body.style.overflow = 'auto'; 
+        function handleTrailerClick(ytLink) {
+            if(!ytLink) { tg.showAlert("⚠️ No trailer found for this title."); return; }
+            
+            tg.showPopup({
+                title: 'Watch Trailer',
+                message: 'Support us by watching through our sponsor link (High Speed) or watch directly on YouTube.',
+                buttons: [
+                    {id: 'ad', type: 'default', text: '🚀 High Speed (Sponsor)'},
+                    {id: 'yt', type: 'destructive', text: '▶️ Direct YouTube'}
+                ]
+            }, (id) => {
+                if(id === 'ad') tg.openLink(MONETAG_LINK);
+                else if(id === 'yt') tg.openLink(ytLink);
+            });
         }
 
-        // تحسين البحث الذكي (سنة أو نص)
-        let searchTimer;
+        function closeModal() { document.getElementById('movieModal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+
         document.getElementById('searchInput').addEventListener('input', (e) => {
-            clearTimeout(searchTimer);
             const val = e.target.value.trim();
-            searchTimer = setTimeout(() => {
-                if (val.length === 4 && !isNaN(val)) fetchMovies(`/discover?year=${val}`);
-                else if (val.length > 2) fetchMovies(`/search?q=${encodeURIComponent(val)}`);
-                else if (val.length === 0) fetchMovies('/trending');
-            }, 600);
+            if(val.length === 4 && !isNaN(val)) fetchMovies(`/discover?year=${val}`);
+            else if(val.length > 2) fetchMovies(`/search?q=${encodeURIComponent(val)}`);
+            else if(val.length === 0) fetchMovies('/trending');
         });
 
-        // تشغيل الأفلام الرائجة عند البداية
         fetchMovies('/trending');
     </script>
 </body>
