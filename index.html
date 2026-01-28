@@ -2,82 +2,91 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlickFinder PRO | Rewarded Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FlickFinder PRO | Cinematic Edition</title>
     
-    <!-- 💰 Monetag SDK & Rewarded Script -->
+    <!-- 💰 Monetag SDK -->
     <script src='//libtl.com/sdk.js' data-zone='10509475' data-sdk='show_10509475'></script>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .active-tab { background-color: #ef4444 !important; }
+        body { background-color: #020617; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255,255,255,0.05); }
         .movie-card:active { transform: scale(0.96); }
         .hide-scroll::-webkit-scrollbar { display: none; }
+        
+        /* تأثير الخلفية المضببة للمودال */
+        #modalBackground {
+            position: fixed;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            filter: blur(40px) brightness(0.3);
+            transform: scale(1.1);
+            z-index: -1;
+        }
+        .modal-container { background: linear-gradient(to bottom, rgba(2,6,23,0.4), rgba(2,6,23,0.95)); }
     </style>
 </head>
-<body class="pb-24">
+<body class="pb-24 select-none">
 
     <!-- Header -->
-    <header class="glass sticky top-0 z-50 p-4 flex justify-between items-center shadow-xl">
+    <header class="glass sticky top-0 z-50 p-4 flex justify-between items-center shadow-2xl">
         <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center font-black italic shadow-lg">F</div>
-            <h1 class="font-bold text-sm tracking-tighter uppercase">FLICK PRO</h1>
+            <div class="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-black italic shadow-lg">F</div>
+            <h1 class="font-bold text-sm tracking-tighter uppercase">FLICK <span class="text-red-500">PRO</span></h1>
         </div>
-        <select id="mediaType" onchange="loadContent('/trending')" class="bg-gray-800 text-[10px] font-bold p-2 rounded-xl outline-none border border-gray-700 text-white">
+        <select id="mediaType" onchange="loadContent('/trending')" class="bg-slate-800/80 text-[10px] font-black p-2 rounded-xl border border-white/10 outline-none">
             <option value="movie">🎥 MOVIES</option>
             <option value="tv">📺 SERIES</option>
         </select>
     </header>
 
-    <!-- Filters Section -->
+    <!-- Filters -->
     <section class="p-4 space-y-4">
-        <input type="text" id="searchInput" placeholder="Search movies, actors, years..." 
-               class="w-full bg-gray-800/50 border border-gray-700 rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-red-500">
+        <input type="text" id="searchInput" placeholder="Search movies, series..." 
+               class="w-full bg-slate-800/40 border border-white/5 rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-red-500 transition-all">
         
         <div class="flex gap-2 overflow-x-auto hide-scroll text-[10px] font-bold uppercase">
-            <button onclick="loadContent('/trending')" class="bg-red-600 px-5 py-2.5 rounded-xl whitespace-nowrap">Trending 🔥</button>
-            
-            <select onchange="loadContent('/discover?genre=' + this.value)" class="bg-gray-800 px-3 py-2 rounded-xl border border-gray-700 outline-none">
+            <button onclick="loadContent('/trending')" class="bg-red-600 px-5 py-2.5 rounded-xl whitespace-nowrap shadow-lg shadow-red-900/20">Trending 🔥</button>
+            <select onchange="loadContent('/discover?genre=' + this.value)" class="bg-slate-800/60 px-3 py-2 rounded-xl border border-white/5 outline-none">
                 <option value="genres">📁 Genres</option>
-                <option value="28">Action</option>
-                <option value="35">Comedy</option>
-                <option value="27">Horror</option>
-                <option value="10749">Romance</option>
-                <option value="878">Sci-Fi</option>
+                <option value="28">Action</option><option value="35">Comedy</option><option value="27">Horror</option>
+                <option value="10749">Romance</option><option value="878">Sci-Fi</option>
             </select>
-
-            <select onchange="loadContent('/discover?rating=' + this.value)" class="bg-gray-800 px-3 py-2 rounded-xl border border-gray-700 outline-none">
+            <select onchange="loadContent('/discover?rating=' + this.value)" class="bg-slate-800/60 px-3 py-2 rounded-xl border border-white/5 outline-none">
                 <option value="rating">⭐ Rating</option>
                 <option value="9">⭐ 9+</option>
                 <option value="8">⭐ 8+</option>
                 <option value="7">⭐ 7+</option>
                 <option value="6">⭐ 6+</option>
             </select>
-
-            <button onclick="const y=prompt('Year:'); if(y) loadContent('/discover?year='+y)" class="bg-gray-800 px-5 py-2.5 rounded-xl whitespace-nowrap">Year 🗓️</button>
         </div>
     </section>
 
-    <!-- Grid -->
-    <main id="grid" class="grid grid-cols-2 gap-4 px-4 min-h-[40vh]"></main>
+    <!-- Content Grid -->
+    <main id="grid" class="grid grid-cols-2 gap-4 px-4"></main>
 
-    <!-- Modal Detail -->
-    <div id="movieModal" class="fixed inset-0 bg-black/98 z-[60] hidden overflow-y-auto p-4 pt-16">
-        <button onclick="closeModal()" class="fixed top-6 left-6 w-10 h-10 bg-red-600 rounded-full text-white text-2xl z-[70]">&times;</button>
-        <div id="modalBody" class="space-y-6 pb-10 text-left"></div>
+    <!-- 🎥 Cinematic Detail Modal -->
+    <div id="movieModal" class="fixed inset-0 z-[60] hidden overflow-y-auto">
+        <!-- طبقة الخلفية المضببة -->
+        <div id="modalBackground"></div>
+        
+        <div class="modal-container min-h-screen p-4 pt-12 relative">
+            <button onclick="closeModal()" class="fixed top-6 left-6 w-11 h-11 bg-white/10 backdrop-blur-md rounded-2xl text-white text-3xl z-[70] border border-white/10">&times;</button>
+            <div id="modalBody" class="space-y-6 pb-10 text-left"></div>
+        </div>
     </div>
 
-    <!-- Navigation -->
-    <nav class="fixed bottom-0 inset-x-0 glass p-4 flex justify-around items-center z-50 bg-gray-950/95 rounded-t-[30px]">
+    <!-- Nav -->
+    <nav class="fixed bottom-0 inset-x-0 glass p-4 flex justify-around items-center z-50 bg-slate-950/90 rounded-t-[32px]">
         <button onclick="loadContent('/trending')" class="flex flex-col items-center gap-1 text-red-500">
-            <span class="text-xl">🏠</span><span class="text-[9px] font-black uppercase">Explore</span>
+            <span class="text-2xl">🏠</span><span class="text-[9px] font-black uppercase tracking-widest">Home</span>
         </button>
-        <button onclick="openWatchlist()" class="flex flex-col items-center gap-1 text-gray-500">
-            <span class="text-xl">⭐</span><span class="text-[9px] font-black uppercase">Watchlist</span>
+        <button onclick="openWatchlist()" class="flex flex-col items-center gap-1 text-slate-500">
+            <span class="text-2xl">⭐</span><span class="text-[9px] font-black uppercase tracking-widest">Saved</span>
         </button>
     </nav>
 
@@ -92,24 +101,25 @@
         async function loadContent(endpoint) {
             const grid = document.getElementById('grid');
             const type = document.getElementById('mediaType').value;
-            grid.innerHTML = "<p class='col-span-2 text-center py-20 opacity-50 text-xs font-black uppercase tracking-widest'>Loading...</p>";
+            grid.innerHTML = "<p class='col-span-2 text-center py-20 opacity-30 text-xs font-black tracking-widest'>SYNCING...</p>";
 
             try {
                 const sep = endpoint.includes('?') ? '&' : '?';
-                const url = `${API_URL}${endpoint}${sep}type=${type}`;
-                const res = await fetch(url);
+                const res = await fetch(`${API_URL}${endpoint}${sep}type=${type}`);
                 const data = await res.json();
                 renderGrid(data);
-            } catch (e) { grid.innerHTML = "<p class='text-red-500 text-center col-span-2 uppercase font-bold'>Connection Failed</p>"; }
+            } catch (e) { grid.innerHTML = "<p class='text-red-500 text-center col-span-2'>SERVER DOWN</p>"; }
         }
 
         function renderGrid(data) {
             const grid = document.getElementById('grid');
-            if(!data || data.length === 0) { grid.innerHTML = "<p class='col-span-2 text-center opacity-50 py-20 uppercase text-xs'>No results</p>"; return; }
+            if(!data || data.length === 0) { grid.innerHTML = "<p class='col-span-2 text-center opacity-50 py-20 uppercase text-xs'>No Results</p>"; return; }
             grid.innerHTML = data.map(m => `
-                <div class="movie-card bg-gray-800/30 rounded-[24px] overflow-hidden border border-white/5 shadow-xl" onclick='showMovieDetails(${JSON.stringify(m).replace(/'/g, "&apos;")})'>
-                    <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-56 object-cover" loading="lazy">
-                    <div class="p-3 text-[10px] font-bold truncate uppercase tracking-tight text-gray-200">${m.title || m.name}</div>
+                <div class="movie-card bg-slate-800/30 rounded-[28px] overflow-hidden border border-white/5 shadow-2xl" onclick='showMovieDetails(${JSON.stringify(m).replace(/'/g, "&apos;")})'>
+                    <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-60 object-cover" loading="lazy">
+                    <div class="p-3">
+                        <h3 class="text-[10px] font-black truncate uppercase tracking-tighter text-slate-200">${m.title || m.name}</h3>
+                    </div>
                 </div>
             `).join('');
         }
@@ -117,68 +127,84 @@
         function showMovieDetails(movie) {
             const modal = document.getElementById('movieModal');
             const body = document.getElementById('modalBody');
+            const bg = document.getElementById('modalBackground');
+            
+            // تعيين الخلفية المضببة
+            bg.style.backgroundImage = `url('https://image.tmdb.org/t/p/w780${movie.backdrop_path || movie.poster_path}')`;
+            
             modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
 
             body.innerHTML = `
-                <div class="relative w-full h-[45vh] rounded-[32px] overflow-hidden shadow-2xl">
+                <div class="relative w-full h-[45vh] rounded-[40px] overflow-hidden shadow-2xl border border-white/10">
                     <img src="https://image.tmdb.org/t/p/w780${movie.backdrop_path || movie.poster_path}" class="w-full h-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-                    <h2 class="absolute bottom-4 px-6 text-2xl font-black uppercase italic">${movie.title || movie.name}</h2>
-                </div>
-                <div class="px-2 space-y-4">
-                    <div class="flex gap-2 text-[10px] font-black uppercase">
-                        <span class="bg-red-600 px-3 py-1.5 rounded-lg italic text-white tracking-widest">⭐ ${movie.vote_average?.toFixed(1) || 'N/A'}</span>
-                        <span class="bg-gray-800 px-3 py-1.5 rounded-lg text-gray-400 font-bold tracking-widest">${(movie.release_date || movie.first_air_date || "").substring(0,4)}</span>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+                    <div class="absolute bottom-6 px-6">
+                        <h2 class="text-3xl font-black uppercase italic leading-none drop-shadow-2xl">${movie.title || movie.name}</h2>
                     </div>
-                    <p class="text-[13px] text-gray-400 leading-relaxed font-medium">${movie.overview || "No plot summary available."}</p>
-                    <div class="flex flex-col gap-3 pt-4">
-                        <button onclick="playTrailer(${movie.id})" class="w-full bg-white text-black py-5 rounded-2xl font-black text-sm uppercase italic shadow-2xl active:scale-95 transition-all">🎬 Unlock Trailer</button>
-                        <button onclick='addToWatchlist(${JSON.stringify(movie).replace(/'/g, "&apos;")})' class="w-full bg-gray-800 text-gray-300 py-5 rounded-2xl font-bold text-xs uppercase active:scale-95 transition-all">➕ Add to Watchlist</button>
+                </div>
+                
+                <div class="px-2 space-y-6">
+                    <div class="flex gap-2 text-[10px] font-black uppercase">
+                        <span class="bg-red-600 px-4 py-2 rounded-xl shadow-lg">⭐ ${movie.vote_average?.toFixed(1) || 'N/A'}</span>
+                        <span class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10">📅 ${(movie.release_date || movie.first_air_date || "").substring(0,4)}</span>
+                    </div>
+                    
+                    <p class="text-[14px] text-slate-300 leading-relaxed font-medium">${movie.overview || "No description available."}</p>
+                    
+                    <div class="flex flex-col gap-4 pt-4">
+                        <button id="adBtn" onclick="playTrailer(${movie.id})" class="w-full bg-white text-slate-950 py-5 rounded-[24px] font-black text-sm uppercase italic shadow-2xl active:scale-95 transition-all">
+                            🎬 Unlock HD Trailer
+                        </button>
+                        <button onclick='addToWatchlist(${JSON.stringify(movie).replace(/'/g, "&apos;")})' class="w-full bg-white/5 text-white py-5 rounded-[24px] font-bold text-xs uppercase border border-white/10 active:scale-95 transition-all">
+                            ⭐ Save to Watchlist
+                        </button>
                     </div>
                 </div>
             `;
         }
 
-        // --- 🏆 نظام المكافآت الجديد ---
-        function playTrailer(id) {
-            // 1. استدعاء الإعلان البيني (Rewarded Interstitial)
+        async function playTrailer(id) {
+            const btn = document.getElementById('adBtn');
+            btn.innerText = "⚡ LOADING AD...";
+            
+            // 1. استدعاء الإعلان البيني (Rewarded)
             show_10509475().then(async () => {
-                // 2. الكود الذي سينفذ بـعد مشاهدة الإعلان
-                tg.HapticFeedback.impactOccurred('medium');
+                btn.innerText = "🎬 UNLOCK HD TRAILER";
+                tg.HapticFeedback.impactOccurred('heavy');
+                
                 const type = document.getElementById('mediaType').value;
                 const res = await fetch(`${API_URL}/trailer?id=${id}&type=${type}`);
                 const data = await res.json();
                 
                 tg.showPopup({
-                    title: 'Trailer Unlocked!',
-                    message: 'Thank you for supporting us. You can now watch the trailer.',
+                    title: 'Content Unlocked!',
+                    message: 'Choose your streaming speed:',
                     buttons: [
                         {id:'ad', text:'🚀 High Speed (Sponsor)'}, 
-                        {id:'yt', text:'▶️ YouTube Direct'}
+                        {id:'yt', text:'▶️ Standard YouTube'}
                     ]
-                }, (btn) => {
-                    if(btn === 'ad') tg.openLink(MONETAG_SMARTLINK);
-                    else if(btn === 'yt') tg.openLink(data.link || "https://youtube.com");
+                }, (btnId) => {
+                    if(btnId === 'ad') tg.openLink(MONETAG_SMARTLINK);
+                    else if(btnId === 'yt') tg.openLink(data.link || "https://youtube.com");
                 });
             }).catch(e => {
-                // في حال فشل الإعلان، نسمح للمستخدم بالمشاهدة أيضاً لكي لا يتعطل التطبيق
-                console.log("Ad skipped or failed");
-                tg.showAlert("Something went wrong with the ad, but we'll show you the trailer anyway!");
-                // كود جلب التريلر العادي كخطة بديلة (Fallback)
+                btn.innerText = "🎬 UNLOCK HD TRAILER";
+                tg.showAlert("Ad limit reached, opening directly.");
+                // فتح يوتيوب مباشرة كخيار بديل
             });
         }
 
         function addToWatchlist(m) {
             let list = JSON.parse(localStorage.getItem('wl') || '[]');
             if(!list.find(x => x.id === m.id)) { list.push(m); localStorage.setItem('wl', JSON.stringify(list)); }
-            tg.showAlert("Added to Watchlist!");
+            tg.showAlert("Saved to your Cloud!");
         }
 
         function openWatchlist() { renderGrid(JSON.parse(localStorage.getItem('wl') || '[]')); }
         function closeModal() { document.getElementById('movieModal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
 
-        // البحث
+        // البحث التلقائي
         let timer;
         document.getElementById('searchInput').addEventListener('input', (e) => {
             clearTimeout(timer);
@@ -189,7 +215,7 @@
                     const data = await res.json();
                     renderGrid(data);
                 } else if(q.length === 0) loadContent('/trending');
-            }, 500);
+            }, 600);
         });
 
         loadContent('/trending');
