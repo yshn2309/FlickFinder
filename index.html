@@ -3,14 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlickFinder PRO | Final Stable</title>
+    <title>FlickFinder PRO | Rewarded Edition</title>
+    
+    <!-- 💰 Monetag SDK & Rewarded Script -->
+    <script src='//libtl.com/sdk.js' data-zone='10509475' data-sdk='show_10509475'></script>
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         .glass { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .active-btn { background-color: #ef4444 !important; border-color: #ef4444 !important; }
+        .active-tab { background-color: #ef4444 !important; }
+        .movie-card:active { transform: scale(0.96); }
         .hide-scroll::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -19,25 +24,24 @@
     <!-- Header -->
     <header class="glass sticky top-0 z-50 p-4 flex justify-between items-center shadow-xl">
         <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center font-black italic">F</div>
-            <h1 class="font-bold text-sm tracking-tighter">FLICK PRO</h1>
+            <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center font-black italic shadow-lg">F</div>
+            <h1 class="font-bold text-sm tracking-tighter uppercase">FLICK PRO</h1>
         </div>
-        <select id="mediaType" onchange="loadContent('/trending')" class="bg-gray-800 text-[10px] font-bold p-2 rounded-xl outline-none border border-gray-700">
+        <select id="mediaType" onchange="loadContent('/trending')" class="bg-gray-800 text-[10px] font-bold p-2 rounded-xl outline-none border border-gray-700 text-white">
             <option value="movie">🎥 MOVIES</option>
             <option value="tv">📺 SERIES</option>
         </select>
     </header>
 
-    <!-- Controls Section -->
+    <!-- Filters Section -->
     <section class="p-4 space-y-4">
         <input type="text" id="searchInput" placeholder="Search movies, actors, years..." 
-               class="w-full bg-gray-800/50 border border-gray-700 rounded-2xl p-4 text-sm outline-none">
+               class="w-full bg-gray-800/50 border border-gray-700 rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-red-500">
         
-        <!-- الأزرار الجديدة: قوائم اختيار مباشرة لضمان العمل -->
         <div class="flex gap-2 overflow-x-auto hide-scroll text-[10px] font-bold uppercase">
             <button onclick="loadContent('/trending')" class="bg-red-600 px-5 py-2.5 rounded-xl whitespace-nowrap">Trending 🔥</button>
             
-            <select onchange="loadContent('/discover?genre=' + this.value)" class="bg-gray-800 px-3 py-2 rounded-xl outline-none border border-gray-700">
+            <select onchange="loadContent('/discover?genre=' + this.value)" class="bg-gray-800 px-3 py-2 rounded-xl border border-gray-700 outline-none">
                 <option value="genres">📁 Genres</option>
                 <option value="28">Action</option>
                 <option value="35">Comedy</option>
@@ -46,11 +50,12 @@
                 <option value="878">Sci-Fi</option>
             </select>
 
-            <select onchange="loadContent('/discover?rating=' + this.value)" class="bg-gray-800 px-3 py-2 rounded-xl outline-none border border-gray-700">
+            <select onchange="loadContent('/discover?rating=' + this.value)" class="bg-gray-800 px-3 py-2 rounded-xl border border-gray-700 outline-none">
                 <option value="rating">⭐ Rating</option>
                 <option value="9">⭐ 9+</option>
                 <option value="8">⭐ 8+</option>
                 <option value="7">⭐ 7+</option>
+                <option value="6">⭐ 6+</option>
             </select>
 
             <button onclick="const y=prompt('Year:'); if(y) loadContent('/discover?year='+y)" class="bg-gray-800 px-5 py-2.5 rounded-xl whitespace-nowrap">Year 🗓️</button>
@@ -60,16 +65,16 @@
     <!-- Grid -->
     <main id="grid" class="grid grid-cols-2 gap-4 px-4 min-h-[40vh]"></main>
 
-    <!-- Modal التفاصيل -->
+    <!-- Modal Detail -->
     <div id="movieModal" class="fixed inset-0 bg-black/98 z-[60] hidden overflow-y-auto p-4 pt-16">
         <button onclick="closeModal()" class="fixed top-6 left-6 w-10 h-10 bg-red-600 rounded-full text-white text-2xl z-[70]">&times;</button>
         <div id="modalBody" class="space-y-6 pb-10 text-left"></div>
     </div>
 
-    <!-- Bottom Nav -->
+    <!-- Navigation -->
     <nav class="fixed bottom-0 inset-x-0 glass p-4 flex justify-around items-center z-50 bg-gray-950/95 rounded-t-[30px]">
         <button onclick="loadContent('/trending')" class="flex flex-col items-center gap-1 text-red-500">
-            <span class="text-xl">🏠</span><span class="text-[9px] font-black uppercase">Home</span>
+            <span class="text-xl">🏠</span><span class="text-[9px] font-black uppercase">Explore</span>
         </button>
         <button onclick="openWatchlist()" class="flex flex-col items-center gap-1 text-gray-500">
             <span class="text-xl">⭐</span><span class="text-[9px] font-black uppercase">Watchlist</span>
@@ -79,13 +84,15 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.ready();
+
         const API_URL = "https://yssef.pythonanywhere.com";
-        const MONETAG = "https://otieu.com/4/10509481";
+        const MONETAG_SMARTLINK = "https://otieu.com/4/10509481";
 
         async function loadContent(endpoint) {
             const grid = document.getElementById('grid');
             const type = document.getElementById('mediaType').value;
-            grid.innerHTML = "<p class='col-span-2 text-center py-20 opacity-50 text-xs font-black uppercase'>Syncing Content...</p>";
+            grid.innerHTML = "<p class='col-span-2 text-center py-20 opacity-50 text-xs font-black uppercase tracking-widest'>Loading...</p>";
 
             try {
                 const sep = endpoint.includes('?') ? '&' : '?';
@@ -93,16 +100,16 @@
                 const res = await fetch(url);
                 const data = await res.json();
                 renderGrid(data);
-            } catch (e) { grid.innerHTML = "<p class='text-red-500 text-center col-span-2'>Check Connection</p>"; }
+            } catch (e) { grid.innerHTML = "<p class='text-red-500 text-center col-span-2 uppercase font-bold'>Connection Failed</p>"; }
         }
 
         function renderGrid(data) {
             const grid = document.getElementById('grid');
             if(!data || data.length === 0) { grid.innerHTML = "<p class='col-span-2 text-center opacity-50 py-20 uppercase text-xs'>No results</p>"; return; }
             grid.innerHTML = data.map(m => `
-                <div class="bg-gray-800/30 rounded-[24px] overflow-hidden border border-white/5 shadow-xl" onclick='showMovieDetails(${JSON.stringify(m).replace(/'/g, "&apos;")})'>
-                    <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-56 object-cover">
-                    <div class="p-3 text-[10px] font-bold truncate uppercase">${m.title || m.name}</div>
+                <div class="movie-card bg-gray-800/30 rounded-[24px] overflow-hidden border border-white/5 shadow-xl" onclick='showMovieDetails(${JSON.stringify(m).replace(/'/g, "&apos;")})'>
+                    <img src="https://image.tmdb.org/t/p/w500${m.poster_path}" class="w-full h-56 object-cover" loading="lazy">
+                    <div class="p-3 text-[10px] font-bold truncate uppercase tracking-tight text-gray-200">${m.title || m.name}</div>
                 </div>
             `).join('');
         }
@@ -114,37 +121,51 @@
             document.body.style.overflow = 'hidden';
 
             body.innerHTML = `
-                <div class="relative w-full h-[40vh] rounded-[30px] overflow-hidden shadow-2xl">
+                <div class="relative w-full h-[45vh] rounded-[32px] overflow-hidden shadow-2xl">
                     <img src="https://image.tmdb.org/t/p/w780${movie.backdrop_path || movie.poster_path}" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
                     <h2 class="absolute bottom-4 px-6 text-2xl font-black uppercase italic">${movie.title || movie.name}</h2>
                 </div>
                 <div class="px-2 space-y-4">
                     <div class="flex gap-2 text-[10px] font-black uppercase">
-                        <span class="bg-red-600 px-3 py-1.5 rounded-lg italic font-bold tracking-widest text-white">⭐ ${movie.vote_average?.toFixed(1) || 'N/A'}</span>
-                        <span class="bg-gray-800 px-3 py-1.5 rounded-lg text-gray-400 font-bold">${(movie.release_date || movie.first_air_date || "").substring(0,4)}</span>
+                        <span class="bg-red-600 px-3 py-1.5 rounded-lg italic text-white tracking-widest">⭐ ${movie.vote_average?.toFixed(1) || 'N/A'}</span>
+                        <span class="bg-gray-800 px-3 py-1.5 rounded-lg text-gray-400 font-bold tracking-widest">${(movie.release_date || movie.first_air_date || "").substring(0,4)}</span>
                     </div>
-                    <p class="text-sm text-gray-400 leading-relaxed font-medium">${movie.overview || "No plot summary."}</p>
+                    <p class="text-[13px] text-gray-400 leading-relaxed font-medium">${movie.overview || "No plot summary available."}</p>
                     <div class="flex flex-col gap-3 pt-4">
-                        <button onclick="playTrailer(${movie.id})" class="w-full bg-white text-black py-5 rounded-2xl font-black text-sm uppercase italic shadow-2xl active:scale-95 transition-all">🎬 Watch Trailer</button>
+                        <button onclick="playTrailer(${movie.id})" class="w-full bg-white text-black py-5 rounded-2xl font-black text-sm uppercase italic shadow-2xl active:scale-95 transition-all">🎬 Unlock Trailer</button>
                         <button onclick='addToWatchlist(${JSON.stringify(movie).replace(/'/g, "&apos;")})' class="w-full bg-gray-800 text-gray-300 py-5 rounded-2xl font-bold text-xs uppercase active:scale-95 transition-all">➕ Add to Watchlist</button>
                     </div>
                 </div>
             `;
         }
 
-        async function playTrailer(id) {
-            const type = document.getElementById('mediaType').value;
-            const res = await fetch(`${API_URL}/trailer?id=${id}&type=${type}`);
-            const data = await res.json();
-            
-            tg.showPopup({
-                title: 'Play Options',
-                message: 'Support us by using our Sponsor Server or watch on YouTube.',
-                buttons: [{id:'ad', text:'🚀 Sponsor Server'}, {id:'yt', text:'▶️ YouTube'}]
-            }, (btn) => {
-                if(btn === 'ad') tg.openLink(MONETAG);
-                else if(btn === 'yt') tg.openLink(data.link || "https://youtube.com");
+        // --- 🏆 نظام المكافآت الجديد ---
+        function playTrailer(id) {
+            // 1. استدعاء الإعلان البيني (Rewarded Interstitial)
+            show_10509475().then(async () => {
+                // 2. الكود الذي سينفذ بـعد مشاهدة الإعلان
+                tg.HapticFeedback.impactOccurred('medium');
+                const type = document.getElementById('mediaType').value;
+                const res = await fetch(`${API_URL}/trailer?id=${id}&type=${type}`);
+                const data = await res.json();
+                
+                tg.showPopup({
+                    title: 'Trailer Unlocked!',
+                    message: 'Thank you for supporting us. You can now watch the trailer.',
+                    buttons: [
+                        {id:'ad', text:'🚀 High Speed (Sponsor)'}, 
+                        {id:'yt', text:'▶️ YouTube Direct'}
+                    ]
+                }, (btn) => {
+                    if(btn === 'ad') tg.openLink(MONETAG_SMARTLINK);
+                    else if(btn === 'yt') tg.openLink(data.link || "https://youtube.com");
+                });
+            }).catch(e => {
+                // في حال فشل الإعلان، نسمح للمستخدم بالمشاهدة أيضاً لكي لا يتعطل التطبيق
+                console.log("Ad skipped or failed");
+                tg.showAlert("Something went wrong with the ad, but we'll show you the trailer anyway!");
+                // كود جلب التريلر العادي كخطة بديلة (Fallback)
             });
         }
 
