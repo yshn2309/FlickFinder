@@ -38,7 +38,7 @@
             <button onclick="loadContent('/trending')" class="bg-red-600 px-5 py-2.5 rounded-xl whitespace-nowrap">Trending 🔥</button>
             
             <select onchange="loadContent('/discover?genre=' + this.value)" class="bg-gray-800 px-3 py-2 rounded-xl outline-none border border-gray-700">
-                <option value="">📁 Genres</option>
+                <option value="genres">📁 Genres</option>
                 <option value="28">Action</option>
                 <option value="35">Comedy</option>
                 <option value="27">Horror</option>
@@ -47,7 +47,7 @@
             </select>
 
             <select onchange="loadContent('/discover?rating=' + this.value)" class="bg-gray-800 px-3 py-2 rounded-xl outline-none border border-gray-700">
-                <option value="">⭐ Rating</option>
+                <option value="rating">⭐ Rating</option>
                 <option value="9">⭐ 9+</option>
                 <option value="8">⭐ 8+</option>
                 <option value="7">⭐ 7+</option>
